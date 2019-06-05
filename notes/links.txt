@@ -1,0 +1,4 @@
+http://www.cs.colby.edu/maxwell/courses/tutorials/maketutor/
+https://en.wikipedia.org/wiki/Mandelbrot_set
+http://netpbm.sourceforge.net/doc/ppm.html
+http://netpbm.sourceforge.net/doc/pgm.html
