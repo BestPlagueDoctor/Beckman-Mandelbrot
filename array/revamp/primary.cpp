@@ -6,6 +6,7 @@
 #include <math.h>
 #include <string.h>
 
+
 int main(int argc, char **argv) {
   printf("Hello world, I will rise\n");
   int maxiter = 4096, xres = 1024, yres = 768;
@@ -41,6 +42,15 @@ int main(int argc, char **argv) {
   printf(" xres: %d yres: %d maxiter %d\n", xres, yres, maxiter);
   printf(" xmin: %.2f xmax: %.2f ymin %.2f ymax %.2f\n", xmin, xmax, ymin, ymax);
   printf("----------------------------------------------------------\n");
+  //allocate memory
+  //call calcs
+  //mandlebrot(img, xmin, ymin, xmax, ymax, xres, yres, maxiter);
+  //rescale colors (image processing)
+  //rescale_colors_log(img, xres, yres, &maxiter);
+  //rescale_colors_log_log(img, xres, yres, &maxiter);
+  //write colors (image) to disk
+  //write_pgm(filename, img, xres, yres, maxiter)
+  //free memory
   mandlebrot_pgm(xmin, ymin, xmax, ymax, xres, yres, maxiter, filename);
   return 0;
 }
