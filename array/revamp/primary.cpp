@@ -57,8 +57,9 @@ int main(int argc, char **argv) {
   //calc
   //printcoord(img, xres, yres, res);
   imgmandel(maxiter, img, res, xres, yres);
-  rescale_colors_pgm(img, res, maxiter);
+  rescale_colors_pgm(img, res, &maxiter);
   write_pgm(filename, img, xres, yres, res, maxiter);
   free(img);
   return 0;
+  //linear interpolation, use the colorscale to create a triplet between two values, 0,0,0 to 1,1,1 first. Code inside of imag.cpp
 }

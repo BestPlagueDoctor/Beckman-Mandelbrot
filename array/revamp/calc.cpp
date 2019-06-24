@@ -44,7 +44,7 @@ void imgmandel(int maxiter, int *img, int res, int xres, int yres) {
   complexnumber z;
   complexnumber zsq;
   for (i = 0; i < res; i++) {
-    printf("I am iterating the loop for the %dth time \n", i);
+    //printf("I am iterating the loop for the %dth time \n", i);
     float rec = findx(xres, i);
     float imc = findy(xres, i);
     z.setcomp(0.0, 0.0); //z=(0+0i)
