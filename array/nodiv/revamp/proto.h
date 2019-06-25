@@ -16,4 +16,3 @@ void imgmandel(int maxiter, int *img, int res, int xres, int yres);
 void write_pgm(const char *filename, int* img, int xres, int yres, int res, int maxiter);
 void rescale_colors_pgm(int *img, int res, int *maxiter);
 void printcoord(int *img, int xres, int yres, int res); 
-void rescale_colors_trigrey(int *img, int res, int xres, int yres, int *maxiter);

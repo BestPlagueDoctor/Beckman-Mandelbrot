@@ -6,10 +6,3 @@ void rescale_colors_pgm(int *img, int res, int *maxiter) {
     img[i] = maxval-img[i];
   }
 }
-
-void rescale_colors_trigrey(int *img, int res, int xres, int yres, int *maxiter) {
-  int r, g, b;
-  for (int i = 0; i < res; i++) {
-    r = img[i] 
-}
-  
