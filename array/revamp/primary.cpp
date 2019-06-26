@@ -62,4 +62,6 @@ int main(int argc, char **argv) {
   free(img);
   return 0;
   //linear interpolation, use the colorscale to create a triplet between two values, 0,0,0 to 1,1,1 first. Code inside of imag.cpp
+  //next step is to add a color ramp using interpol, possibly a log or exponential scale, somewhere between 0 and 1 for each value. Add a way to have something other than a pure inversion.
+
 }

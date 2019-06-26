@@ -8,8 +8,9 @@ void rescale_colors_pgm(int *img, int res, int *maxiter) {
 }
 
 void rescale_colors_tri_ppm(int *img, int res, int xres, int yres, int *maxiter, int i, int r, int g, int b) {
-  //g = img[i] / *maxiter;
-  //b = img[i] / *maxiter;
+  r = img[i] / *maxiter;
+  g = img[i] / *maxiter;
+  b = img[i] / *maxiter;
 }
 int rescale_r_ppm(int *img, int *maxiter, int i, int r) {
   r = (img[i] * 255) / *maxiter;
