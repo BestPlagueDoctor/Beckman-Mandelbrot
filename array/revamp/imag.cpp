@@ -1,7 +1,7 @@
 #include "proto.h"
 
 void rescale_colors_global(float *zeroimg, int *img, int xres, int yres, int *maxiter) {
-  for (int i = 0; i < xres*yres; i++) {
+  for (int i = 0; i < (xres*yres); i++) {
     zeroimg[i] = img[i] / *maxiter;
   }
   //optional for rgb because those have to be ints, just use float code and convert to int
