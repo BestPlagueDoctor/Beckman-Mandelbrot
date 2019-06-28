@@ -23,7 +23,8 @@ void write_pgm(const char *filename, int* img, int xres, int yres, int res, int 
   fclose(ofp);
 }
 
-void write_ppm(const char *filename, int *img, int xres, int yres, int res, int maxiter) {
+void write_ppm(const char *filename, float *zeroimg, int *img, int xres, int yres, int res, int maxiter) {
+  rescale_colors_global(zeroimg, img, xres, yres, &maxiter);
   FILE *ofp;
   if ((ofp = fopen(filename, "w")) == NULL) {
     perror("Failed to open output file\n");
@@ -35,11 +36,14 @@ void write_ppm(const char *filename, int *img, int xres, int yres, int res, int 
   fprintf(ofp, "%d \n", 255);
   int i; 
   for (i = 0; i < res; i++) {
-    int r = 0, g = 0, b = 0;
-    r = rescale_r_ppm(img, &maxiter, i, r);
-    //g = rescale_r_ppm(img, &maxiter, i, g);
-    //b = rescale_r_ppm(img, &maxiter, i, b);
-    fprintf(ofp, "%d %d %d  ", r, g, b);
+    float r = 0, g = 0, b = 0;
+    r = (rescale_r_ppm(zeroimg, &maxiter, i, r));
+    g = (rescale_g_ppm(zeroimg, &maxiter, i, g));
+    //b = (rescale_b_ppm(zeroimg, &maxiter, i, b));
+    r = (255 - rescale_r_ppm(zeroimg, &maxiter, i, r));
+    //g = (255 - rescale_g_ppm(zeroimg, &maxiter, i, g));
+    b = (255 - rescale_b_ppm(zeroimg, &maxiter, i, b));
+    fprintf(ofp, "%.3f %.3f %.3f  ", r, g, b);
     if (i%xres == 0) {
       fprintf(ofp, "\n");
     }

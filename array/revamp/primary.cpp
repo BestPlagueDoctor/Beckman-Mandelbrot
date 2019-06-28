@@ -54,12 +54,14 @@ int main(int argc, char **argv) {
   //write_pgm(filename, img, xres, yres, maxiter)
   //free memory
   int *img= (int*) malloc(res*sizeof(int));
+  float *zeroimg = (float*) malloc(res*sizeof(float));
   //calc
   //printcoord(img, xres, yres, res);
   imgmandel(maxiter, img, res, xres, yres);
   //rescale_colors_pgm(img, res, &maxiter);
-  write_ppm(filename, img, xres, yres, res, maxiter);
+  write_ppm(filename, zeroimg, img, xres, yres, res, maxiter);
   free(img);
+  free(zeroimg);
   return 0;
   //linear interpolation, use the colorscale to create a triplet between two values, 0,0,0 to 1,1,1 first. Code inside of imag.cpp
   //next step is to add a color ramp using interpol, possibly a log or exponential scale, somewhere between 0 and 1 for each value. Add a way to have something other than a pure inversion.

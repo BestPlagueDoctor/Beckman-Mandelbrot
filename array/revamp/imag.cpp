@@ -1,5 +1,14 @@
 #include "proto.h"
 
+void rescale_colors_global(float *zeroimg, int *img, int xres, int yres, int *maxiter) {
+  for (int i = 0; i < xres*yres; i++) {
+    zeroimg[i] = img[i] / *maxiter;
+  }
+  //optional for rgb because those have to be ints, just use float code and convert to int
+  /*for (int i = 0; i < xres*yres; i++) {
+    img[i] = zeroimg[i];
+  }*/
+}
 void rescale_colors_pgm(int *img, int res, int *maxiter) {
   int maxval = (*maxiter) + 1;
   for (int i = 0; i < res; i++) {
@@ -8,19 +17,19 @@ void rescale_colors_pgm(int *img, int res, int *maxiter) {
 }
 
 void rescale_colors_tri_ppm(int *img, int res, int xres, int yres, int *maxiter, int i, int r, int g, int b) {
-  r = img[i] / *maxiter;
-  g = img[i] / *maxiter;
-  b = img[i] / *maxiter;
+  //r = img[i] / *maxiter;
+  //g = img[i] / *maxiter;
+  //b = img[i] / *maxiter;
 }
-int rescale_r_ppm(int *img, int *maxiter, int i, int r) {
-  r = (img[i] * 255) / *maxiter;
+float rescale_r_ppm(float *zeroimg, int *maxiter, int i, int r) {
+  r = zeroimg[i] * 255;
   return r;
 }
-int rescale_g_ppm(int *img, int *maxiter, int i, int g) { 
-  g = (img[i] * 255) / *maxiter;
+float rescale_g_ppm(float *zeroimg, int *maxiter, int i, int g) { 
+  g = zeroimg[i] * 255;
   return g;
 }
-int rescale_b_ppm(int *img, int *maxiter, int i, int b) {  
-  b = (img[i] * 255) / *maxiter;
+float rescale_b_ppm(float *zeroimg, int *maxiter, int i, int b) {  
+  b = zeroimg[i] * 255; 
   return b;
 }

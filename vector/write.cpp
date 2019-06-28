@@ -23,7 +23,7 @@ void write_pgm(const char *filename, int* img, int xres, int yres, int res, int 
   fclose(ofp);
 }
 
-void write_ppm(const char *filename, int *img, int xres, int yres, int res, int maxiter) {
+void write_ppm(const char *filename, Image img, int xres, int yres, int res, int maxiter) {
   FILE *ofp;
   if ((ofp = fopen(filename, "w")) == NULL) {
     perror("Failed to open output file\n");

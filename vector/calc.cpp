@@ -2,7 +2,7 @@
 #include <cmath>
   
 
-void imgmandel(int maxiter, int *img, int res, int xres, int yres) {
+void imgmandel(int maxiter, Image img, int res, int xres, int yres) {
   int i = 0;
   int newit = 0;
   complexnumber c;
