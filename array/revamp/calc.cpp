@@ -1,13 +1,13 @@
 #include "proto.h"
 #include <cmath>
-float findx(int xres, int i) {
+/*float findx(int xres, int i) {
   float xcoord = floor(i%xres);
   return xcoord;
 }
 float findy(int xres, int i) {
   float ycoord = floor(i/xres);
   return ycoord;
-}
+}*/
 
 int findidx(int xres, int x, int y) {
   return y*xres + x;
@@ -23,7 +23,7 @@ void setvals(int* img, int xres, int yres) {
   }
 }
 
-void printcoord(int *img, int xres, int yres, int res) {
+/*void printcoord(int *img, int xres, int yres, int res) {
   int i, x, y;
   for (i = 0; i < res; i++) {
     x = findx(xres, i);
@@ -34,7 +34,7 @@ void printcoord(int *img, int xres, int yres, int res) {
       printf("\n");
     }
   }
-}
+}*/
 
 /*void imgmandel(int maxiter, int *img, int res, int xres, int yres) {
   int i = 0;
@@ -70,8 +70,9 @@ void printcoord(int *img, int xres, int yres, int res) {
 
 void imgmandel(int maxiter, int *img, int res, int xres, int yres) {
   setvals(img, xres, yres);
-  float recdiv = 3/xres;
+  //float recdiv = 3/(xres);
   float imcdiv = 2.4/yres;
+  //printf("%.10f, %.10f", recdiv, imcdiv);
   complexnumber c;
   complexnumber z;
   complexnumber zsq;
@@ -79,10 +80,10 @@ void imgmandel(int maxiter, int *img, int res, int xres, int yres) {
   for (y = 0; y < yres; y++) {
     int x;
       for (x = 0; x < xres; x++) {
-        float rec = x;
-        float imc = y;
-        //float nrec = ((rec*recdiv) - 2.0), nimc = ((imc*imcdiv)-1.2);
-        float nrec = (((rec*3)/xres)-2), nimc = (((imc*2.4)/yres)-1.2);
+        //next line is crucial
+        float rec = x, imc = y;
+        float nimc = ((imc*imcdiv)-1.2);
+        float nrec = (((rec*3)/xres)-2); 
         c.setcomp(nrec, nimc);
         z.setcomp(0.0,0.0);
         int iters;
