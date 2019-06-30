@@ -75,12 +75,11 @@ void imgmandel(int maxiter, int *img, int res, int xres, int yres) {
   //printf("%.10f, %.10f", recdiv, imcdiv);
   complexnumber c;
   complexnumber z;
-  complexnumber zsq;
   int y, i;
   for (y = 0; y < yres; y++) {
     int x;
       for (x = 0; x < xres; x++) {
-        //next line is crucial
+        //next line is crucial bc idk
         float rec = x, imc = y;
         float nimc = ((imc*imcdiv)-1.2);
         float nrec = (((rec*3)/xres)-2); 
@@ -95,7 +94,7 @@ void imgmandel(int maxiter, int *img, int res, int xres, int yres) {
             break;
           }
         }
-        i+=1;
+        i++;
         img[i] = iters;
       }
     }
