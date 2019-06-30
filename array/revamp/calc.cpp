@@ -36,7 +36,7 @@ void printcoord(int *img, int xres, int yres, int res) {
   }
 }
 
-void imgmandel(int maxiter, int *img, int res, int xres, int yres) {
+/*void imgmandel(int maxiter, int *img, int res, int xres, int yres) {
   int i = 0;
   int newit = 0;
   setvals(img, xres, yres);
@@ -66,4 +66,36 @@ void imgmandel(int maxiter, int *img, int res, int xres, int yres) {
     //printf("%d", iters);
     img[i] = iters;  
   }
-}
+}*/
+
+void imgmandel(int maxiter, int *img, int res, int xres, int yres) {
+  setvals(img, xres, yres);
+  float recdiv = 3/xres;
+  float imcdiv = 2.4/yres;
+  complexnumber c;
+  complexnumber z;
+  complexnumber zsq;
+  int y, i;
+  for (y = 0; y < yres; y++) {
+    int x;
+      for (x = 0; x < xres; x++) {
+        float rec = x;
+        float imc = y;
+        //float nrec = ((rec*recdiv) - 2.0), nimc = ((imc*imcdiv)-1.2);
+        float nrec = (((rec*3)/xres)-2), nimc = (((imc*2.4)/yres)-1.2);
+        c.setcomp(nrec, nimc);
+        z.setcomp(0.0,0.0);
+        int iters;
+        for (iters = 0; iters < maxiter; iters++) {
+          z.multcomp(z, z);
+          z.addcomp(z, c);
+          //printf("%d ", iters);
+          if (z.sqmagnit() >= 4.0) {
+            break;
+          }
+        }
+        i+=1;
+        img[i] = iters;
+      }
+    }
+  }
