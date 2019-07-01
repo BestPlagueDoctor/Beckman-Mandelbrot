@@ -1,5 +1,6 @@
 #include "proto.h"
 #include <cmath>
+void looper(int &iters, complexnumber z, complexnumber c);
 /*float findx(int xres, int i) {
   float xcoord = floor(i%xres);
   return xcoord;
@@ -68,9 +69,9 @@ void setvals(int* img, int xres, int yres) {
   }
 }*/
 
-void imgmandel(int maxiter, int *img, int res, int xres, int yres) {
+/*void imgmandel(int maxiter, int *img, int res, int xres, int yres) {
   setvals(img, xres, yres);
-  //float recdiv = 3/(xres);
+  float recdiv = 3.0/(xres);
   float imcdiv = 2.4/yres;
   //printf("%.10f, %.10f", recdiv, imcdiv);
   complexnumber c;
@@ -82,7 +83,7 @@ void imgmandel(int maxiter, int *img, int res, int xres, int yres) {
         //next line is crucial bc idk
         float rec = x, imc = y;
         float nimc = ((imc*imcdiv)-1.2);
-        float nrec = (((rec*3)/xres)-2); 
+        float nrec = (((rec*recdiv)/xres)-2); 
         c.setcomp(nrec, nimc);
         z.setcomp(0.0,0.0);
         int iters;
@@ -98,4 +99,60 @@ void imgmandel(int maxiter, int *img, int res, int xres, int yres) {
         img[i] = iters;
       }
     }
+  }*/
+
+
+void imgmandel(int maxiter, int *img, int res, int xres, int yres) {
+  setvals(img, xres, yres);
+  float recdiv = 3.0/(xres);
+  float imcdiv = 2.4/yres;
+  //printf("%.10f, %.10f", recdiv, imcdiv);
+  complexnumber c;
+  complexnumber z;
+  complexnumber save;
+  int y, i;
+  for (y = 0; y < yres; y++) {
+    int x;
+      for (x = 0; x < xres; x++) {
+        //next line is crucial bc idk
+        float rec = x, imc = y;
+        float nimc = ((imc*imcdiv)-1.2);
+        float nrec = (((rec*recdiv)-2)); 
+        c.setcomp(nrec, nimc);
+        z.setcomp(0.0,0.0);
+        save.setcomp(0.0, 0.0);
+        int iters;
+        for (iters = 0; iters < maxiter; iters+=4) {
+          save.setcomp(z.getreal(), z.getimag());
+          z.multcomp(z, z);
+          z.addcomp(z, c);
+          z.multcomp(z, z);
+          z.addcomp(z, c);
+          z.multcomp(z, z);
+          z.addcomp(z, c);
+          z.multcomp(z, z);
+          z.addcomp(z, c);
+          if (z.sqmagnit() >= 4.0) {
+            iters -= 4;
+            z.setcomp(save.getreal(), save.getimag());
+            looper(iters, z, c);
+            break;
+          }
+        }
+        i++;
+        img[i] = iters;
+      }
+    }
   }
+
+void looper(int &iters, complexnumber z, complexnumber c) {
+  for (int i = 0; i <= 4; i ++) {
+    z.multcomp(z, z);
+    z.addcomp(z, c);
+    if (z.sqmagnit() >= 4) {
+      break;
+    }
+    iters++;
+  }
+}
+
