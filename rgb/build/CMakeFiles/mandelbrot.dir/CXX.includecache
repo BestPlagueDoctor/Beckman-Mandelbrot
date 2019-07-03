@@ -1,0 +1,18 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../include/proto.h
+stdio.h
+-
+
+/home/sam/Beckman-Mandelbrot/rgb/src/calc.cpp
+proto.h
+/home/sam/Beckman-Mandelbrot/rgb/src/proto.h
+cmath
+-
+
