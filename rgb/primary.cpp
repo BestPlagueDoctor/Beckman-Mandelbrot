@@ -1,4 +1,5 @@
 //This is the main file that calls all other functions (as of right now)
+#include <memory>
 #include "proto.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -43,6 +44,7 @@ int main(int argc, char **argv) {
   printf("'%s': Running Mandelbrot set with params:\n", argv[0]);
   printf(" xres: %d yres: %d maxiter %d\n", xres, yres, maxiter);
   printf(" xmin: %.2f xmax: %.2f ymin %.2f ymax %.2f\n", xmin, xmax, ymin, ymax);
+  printf("got hree");
   printf("----------------------------------------------------------\n");
   //allocate memory
   //call calcs(calc file, using arrays)
@@ -53,16 +55,19 @@ int main(int argc, char **argv) {
   //write colors (image) to disk
   //write_pgm(filename, img, xres, yres, maxiter)
   //free memory
-  int *img= (int*) malloc(res*sizeof(int));
-  float *zeroimg = (float*) malloc(res*sizeof(float));
+  //int *img= (int*) malloc(res*sizeof(int));
+  //float *zeroimg = (float*) malloc(res*sizeof(float));
+  auto img = std::make_unique<int[]>(res);
+  auto zeroimg = std::make_unique<float[]>(res);
+  
   //calc
   //printcoord(img, xres, yres, res);
-  imgmandel(maxiter, img, res, xres, yres);
-  rescale_colors_global(zeroimg, img, xres, yres, &maxiter);
+  imgmandel(maxiter, img.get(), res, xres, yres);
+  rescale_colors_global(zeroimg.get(), img.get(), xres, yres, &maxiter);
   //rescale_colors_pgm(img, res, &maxiter);
-  write_ppm(filename, zeroimg, img, xres, yres, res, maxiter);
-  free(img);
-  free(zeroimg);
+  write_ppm(filename, zeroimg.get(), img.get(), xres, yres, res, maxiter);
+  //free(img);
+  //free(zeroimg);
   return 0;
   //linear interpolation, use the colorscale to create a triplet between two values, 0,0,0 to 1,1,1 first. Code inside of imag.cpp
   //next step is to add a color ramp using interpol, possibly a log or exponential scale, somewhere between 0 and 1 for each value. Add a way to have something other than a pure inversion.
