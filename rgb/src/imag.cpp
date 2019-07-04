@@ -22,7 +22,7 @@ void rescale_colors_tri_ppm(int *img, int res, int xres, int yres, int *maxiter,
   //g = img[i] / *maxiter;
   //b = img[i] / *maxiter;
 }
-float rescale_r_ppm(std::vector<float> zeroimg, int *maxiter, int i, int r) {
+float rescale_r_ppm(std::vector<float> &zeroimg, int *maxiter, int i, int r) {
   r = zeroimg[i] * 255;
   return r;
 }

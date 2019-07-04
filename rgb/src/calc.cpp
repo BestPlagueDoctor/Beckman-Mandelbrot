@@ -14,7 +14,7 @@ int findidx(int xres, int x, int y) {
   return y*xres + x;
 }
 
-void setvals(int* img, int xres, int yres) {
+void setvals(std::vector<int> &img, int xres, int yres) {
   int x, y;
   for (y = 0; y < yres; y++) {
     for (x = 0; x < xres; x++) {
@@ -102,7 +102,7 @@ void setvals(int* img, int xres, int yres) {
   }*/
 
 
-void imgmandel(int maxiter, int *img, int res, int xres, int yres) {
+void imgmandel(int maxiter, std::vector<int> &img, int res, int xres, int yres) {
   setvals(img, xres, yres);
   float recdiv = 3.0/(xres);
   float imcdiv = 2.4/yres;
