@@ -1,4 +1,5 @@
 #include "proto.h"
+#include <vector>
 #include <cstdio>
 
 void write_pgm(const char *filename, int* img, int xres, int yres, int res, int maxiter) {
@@ -23,7 +24,7 @@ void write_pgm(const char *filename, int* img, int xres, int yres, int res, int 
   fclose(ofp);
 }
 
-void write_ppm(const char *filename, float *zeroimg, int *img, int xres, int yres, int res, int maxiter) {
+void write_ppm(const char *filename, std::vector<float> *zeroimg, std::vector<int> *img, int xres, int yres, int res, int maxiter) {
   FILE *ofp;
   if ((ofp = fopen(filename, "w")) == NULL) {
     perror("Failed to open output file\n");

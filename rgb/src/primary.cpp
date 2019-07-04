@@ -6,6 +6,7 @@
 #include <iostream>
 #include <math.h>
 #include <string.h>
+#include <vector>
 
 
 int main(int argc, char **argv) {
@@ -57,15 +58,17 @@ int main(int argc, char **argv) {
   //free memory
   //int *img= (int*) malloc(res*sizeof(int));
   //float *zeroimg = (float*) malloc(res*sizeof(float));
-  auto img = std::make_unique<int[]>(res);
-  auto zeroimg = std::make_unique<float[]>(res);
+  //auto img = std::make_unique<int[]>(res);
+  //auto zeroimg = std::make_unique<float[]>(res);
+  auto img = std::vector<int>(res);
+  auto zeroimg = std::vector<float>(res);
   
   //calc
   //printcoord(img, xres, yres, res);
-  imgmandel(maxiter, img.get(), res, xres, yres);
-  rescale_colors_global(zeroimg.get(), img.get(), xres, yres, &maxiter);
+  imgmandel(maxiter, img, res, xres, yres);
+  rescale_colors_global(zeroimg, img, xres, yres, &maxiter);
   //rescale_colors_pgm(img, res, &maxiter);
-  write_ppm(filename, zeroimg.get(), img.get(), xres, yres, res, maxiter);
+  write_ppm(filename, zeroimg, img, xres, yres, res, maxiter);
   //free(img);
   //free(zeroimg);
   return 0;

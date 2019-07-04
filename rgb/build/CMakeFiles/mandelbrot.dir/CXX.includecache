@@ -9,10 +9,10 @@
 ../include/proto.h
 stdio.h
 -
+vector
+-
 
-/home/sam/Beckman-Mandelbrot/rgb/src/calc.cpp
+/home/sam/Beckman-Mandelbrot/rgb/src/imag.cpp
 proto.h
 /home/sam/Beckman-Mandelbrot/rgb/src/proto.h
-cmath
--
 
