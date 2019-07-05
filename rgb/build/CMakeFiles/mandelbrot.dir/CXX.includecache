@@ -12,20 +12,6 @@ stdio.h
 vector
 -
 
-/home/sam/Beckman-Mandelbrot/rgb/src/calc.cpp
-proto.h
-/home/sam/Beckman-Mandelbrot/rgb/src/proto.h
-cmath
--
-
-/home/sam/Beckman-Mandelbrot/rgb/src/class.cpp
-proto.h
-/home/sam/Beckman-Mandelbrot/rgb/src/proto.h
-
-/home/sam/Beckman-Mandelbrot/rgb/src/imag.cpp
-proto.h
-/home/sam/Beckman-Mandelbrot/rgb/src/proto.h
-
 /home/sam/Beckman-Mandelbrot/rgb/src/primary.cpp
 memory
 -
@@ -42,13 +28,5 @@ math.h
 string.h
 -
 vector
--
-
-/home/sam/Beckman-Mandelbrot/rgb/src/write.cpp
-proto.h
-/home/sam/Beckman-Mandelbrot/rgb/src/proto.h
-vector
--
-cstdio
 -
 

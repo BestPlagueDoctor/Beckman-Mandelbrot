@@ -102,7 +102,7 @@ void setvals(std::vector<int> &img, int xres, int yres) {
   }*/
 
 
-void imgmandel(int maxiter, std::vector<int> &img, int res, int xres, int yres) {
+void imgmandel(int maxiter, std::vector<int> &img, int xres, int yres) {
   setvals(img, xres, yres);
   float recdiv = 3.0/(xres);
   float imcdiv = 2.4/yres;

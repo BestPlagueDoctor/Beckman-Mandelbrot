@@ -24,7 +24,7 @@ void write_pgm(const char *filename, int* img, int xres, int yres, int res, int 
   fclose(ofp);
 }
 
-void write_ppm(const char *filename, std::vector<float> *zeroimg, std::vector<int> *img, int xres, int yres, int res, int maxiter) {
+void write_ppm(const char *filename, std::vector<float> &zeroimg, int xres, int yres, int res, int maxiter) {
   FILE *ofp;
   if ((ofp = fopen(filename, "w")) == NULL) {
     perror("Failed to open output file\n");
@@ -37,12 +37,12 @@ void write_ppm(const char *filename, std::vector<float> *zeroimg, std::vector<in
   int i; 
   for (i = 0; i < res; i++) {
     int r = 0.0, g = 0.0, b = 0.0;
-    r = rescale_r_ppm(zeroimg, &maxiter, i, r);
-    //g = (rescale_g_ppm(zeroimg, &maxiter, i, g));
-    //b = (rescale_b_ppm(zeroimg, &maxiter, i, b));
-    //r = (255 - rescale_r_ppm(zeroimg, &maxiter, i, r));
-    //g = (255 - rescale_g_ppm(zeroimg, &maxiter, i, g));
-    //b = (255 - rescale_b_ppm(zeroimg, &maxiter, i, b));
+    r = rescale_r_ppm(zeroimg, maxiter, i, r);
+    //g = (rescale_g_ppm(zeroimg, maxiter, i, g));
+    //b = (rescale_b_ppm(zeroimg, maxiter, i, b));
+    //r = (255 - rescale_r_ppm(zeroimg, maxiter, i, r));
+    //g = (255 - rescale_g_ppm(zeroimg, maxiter, i, g));
+    //b = (255 - rescale_b_ppm(zeroimg, maxiter, i, b));
     fprintf(ofp, "%d %d %d ", r, g, b);
     if (i%xres == 0) {
       fprintf(ofp, "\n");

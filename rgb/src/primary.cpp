@@ -17,6 +17,7 @@ int main(int argc, char **argv) {
   //outputmode being skipped for now
   char filename[1024];
   strcpy(filename, "test.ppm");
+  printf("%d", argc);
   /*for (int arg=1; arg<argc;arg++) {
     if (!strcmp(argv[arg], "-h") || !strcmp(argv[arg], "--help")) {
       printf("Usage: \n");
@@ -65,10 +66,10 @@ int main(int argc, char **argv) {
   
   //calc
   //printcoord(img, xres, yres, res);
-  imgmandel(maxiter, img, res, xres, yres);
-  rescale_colors_global(zeroimg, img, xres, yres, &maxiter);
+  imgmandel(maxiter, img, xres, yres);
+  rescale_colors_global(zeroimg, img, xres, yres, maxiter);
   //rescale_colors_pgm(img, res, &maxiter);
-  write_ppm(filename, zeroimg, img, xres, yres, res, maxiter);
+  write_ppm(filename, zeroimg, xres, yres, res, maxiter);
   //free(img);
   //free(zeroimg);
   return 0;
