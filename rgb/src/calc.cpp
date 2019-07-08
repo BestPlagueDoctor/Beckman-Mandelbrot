@@ -36,15 +36,29 @@ void imgmandel(int maxiter, std::vector<int> &img, int xres, int yres) {
         save.setcomp(0.0, 0.0);
         int iters;
         for (iters = 0; iters < maxiter; iters+=4) {
+          float zreal = z.getreal(), zimag = z.getimag();
+          float creal = c.getreal(), cimag = c.getimag();
           save.setcomp(z.getreal(), z.getimag());
-          z.multcomp(z, z);
-          z.addcomp(z, c);
-          z.multcomp(z, z);
-          z.addcomp(z, c);
-          z.multcomp(z, z);
-          z.addcomp(z, c);
-          z.multcomp(z, z);
-          z.addcomp(z, c);
+          //z.multcomp(z, z); z.addcomp(z, c); z.multcomp(z, z); z.addcomp(z, c); z.multcomp(z, z); z.addcomp(z, c); z.multcomp(z, z); z.addcomp(z, c);
+          //squaring z
+          zreal = (zreal * zreal) - (zimag * zimag);
+          zimag = (zreal * zimag) + (zimag * zreal);
+          //adding c
+          zreal = zreal + creal;
+          zimag = zimag + cimag;
+          zreal = (zreal * zreal) - (zimag * zimag);
+          zimag = (zreal * zimag) + (zimag * zreal);
+          zreal = zreal + creal;
+          zimag = zimag + cimag;
+          zreal = (zreal * zreal) - (zimag * zimag);
+          zimag = (zreal * zimag) + (zimag * zreal);
+          zreal = zreal + creal;
+          zimag = zimag + cimag;
+          zreal = (zreal * zreal) - (zimag * zimag);
+          zimag = (zreal * zimag) + (zimag * zreal);
+          zreal = zreal + creal;
+          zimag = zimag + cimag;
+          z.setcomp(zreal, zimag);
           if (z.sqmagnit() >= 4.0) {
             iters -= 4;
             z.setcomp(save.getreal(), save.getimag());

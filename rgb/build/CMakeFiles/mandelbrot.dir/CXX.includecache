@@ -12,7 +12,9 @@ stdio.h
 vector
 -
 
-/home/sam/Beckman-Mandelbrot/rgb/src/imag.cpp
+/home/sam/Beckman-Mandelbrot/rgb/src/calc.cpp
 proto.h
 /home/sam/Beckman-Mandelbrot/rgb/src/proto.h
+cmath
+-
 
