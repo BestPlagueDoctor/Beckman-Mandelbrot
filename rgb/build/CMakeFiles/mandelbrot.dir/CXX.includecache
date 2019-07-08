@@ -12,21 +12,7 @@ stdio.h
 vector
 -
 
-/home/sam/Beckman-Mandelbrot/rgb/src/primary.cpp
-memory
--
+/home/sam/Beckman-Mandelbrot/rgb/src/imag.cpp
 proto.h
 /home/sam/Beckman-Mandelbrot/rgb/src/proto.h
-stdlib.h
--
-stdio.h
--
-iostream
--
-math.h
--
-string.h
--
-vector
--
 
