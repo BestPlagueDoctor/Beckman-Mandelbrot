@@ -44,7 +44,7 @@ void imgmandel(int maxiter, std::vector<int> &img, int xres, int yres) {
           //squaring z
           ztemp = zreal;
           zreal = ((zreal * zreal) - (zimag * zimag));
-          zimag = ((ztemp * zimag) );
+          zimag = (ztemp * zimag);
           zimag += zimag;
           //adding c
           zreal += creal;
@@ -52,7 +52,7 @@ void imgmandel(int maxiter, std::vector<int> &img, int xres, int yres) {
           //squaring z
           ztemp = zreal;
           zreal = ((zreal * zreal) - (zimag * zimag));
-          zimag = ((ztemp * zimag) );
+          zimag = (ztemp * zimag);
           zimag += zimag;
           //adding c
           zreal += creal;
@@ -60,7 +60,7 @@ void imgmandel(int maxiter, std::vector<int> &img, int xres, int yres) {
           //squaring z
           ztemp = zreal;
           zreal = ((zreal * zreal) - (zimag * zimag));
-          zimag = ((ztemp * zimag) );
+          zimag = (ztemp * zimag);
           zimag += zimag;
           //adding c
           zreal += creal;
@@ -68,7 +68,7 @@ void imgmandel(int maxiter, std::vector<int> &img, int xres, int yres) {
           //squaring z
           ztemp = zreal;
           zreal = ((zreal * zreal) - (zimag * zimag));
-          zimag = ((ztemp * zimag) );
+          zimag = (ztemp * zimag);
           zimag += zimag;
           //adding c
           zreal += creal;

@@ -24,6 +24,20 @@ void write_pgm(const char *filename, int* img, int xres, int yres, int res, int 
   fclose(ofp);
 }
 
+float rescale_r_ppm(std::vector<float> &zeroimg, int i, int &r) {
+  r = zeroimg[i] * 255;
+  return r;
+}
+float rescale_g_ppm(std::vector<float> &zeroimg, int i, int &g) { 
+  g = zeroimg[i] * 255;
+  return g;
+}
+float rescale_b_ppm(std::vector<float> &zeroimg, int i, int &b) {  
+  b = zeroimg[i] * 255; 
+  return b;
+}
+
+
 void write_ppm(const char *filename, std::vector<float> &zeroimg, int xres, int yres, int res, int maxiter) {
   FILE *ofp;
   if ((ofp = fopen(filename, "w")) == NULL) {

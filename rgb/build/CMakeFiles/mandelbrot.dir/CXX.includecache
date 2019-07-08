@@ -12,11 +12,11 @@ stdio.h
 vector
 -
 
-/home/sam/Beckman-Mandelbrot/rgb/src/calc.cpp
+/home/sam/Beckman-Mandelbrot/rgb/src/write.cpp
 proto.h
 /home/sam/Beckman-Mandelbrot/rgb/src/proto.h
-iostream
+vector
 -
-cmath
+cstdio
 -
 
