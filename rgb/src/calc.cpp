@@ -1,4 +1,5 @@
 #include "proto.h"
+#include <iostream>
 #include <cmath>
 void looper(int &iters, complexnumber z, complexnumber c);
 
@@ -29,35 +30,50 @@ void imgmandel(int maxiter, std::vector<int> &img, int xres, int yres) {
     int x;
       for (x = 0; x < xres; x++) {
         float rec = x, imc = y;
-        float nimc = ((imc*imcdiv)-1.2);
-        float nrec = (((rec*recdiv)-2)); 
-        c.setcomp(nrec, nimc);
+        float cimag = ((imc*imcdiv)-1.2);
+        float creal = (((rec*recdiv)-2)); 
+        c.setcomp(creal, cimag);
         z.setcomp(0.0,0.0);
         save.setcomp(0.0, 0.0);
         int iters;
+        std::string str;
         for (iters = 0; iters < maxiter; iters+=4) {
-          float zreal = z.getreal(), zimag = z.getimag();
-          float creal = c.getreal(), cimag = c.getimag();
+          float zreal = z.getreal(), zimag = z.getimag(), ztemp = 0.0;
           save.setcomp(z.getreal(), z.getimag());
           //z.multcomp(z, z); z.addcomp(z, c); z.multcomp(z, z); z.addcomp(z, c); z.multcomp(z, z); z.addcomp(z, c); z.multcomp(z, z); z.addcomp(z, c);
           //squaring z
-          zreal = (zreal * zreal) - (zimag * zimag);
-          zimag = (zreal * zimag) + (zimag * zreal);
+          ztemp = zreal;
+          zreal = ((zreal * zreal) - (zimag * zimag));
+          zimag = ((ztemp * zimag) );
+          zimag += zimag;
           //adding c
-          zreal = zreal + creal;
-          zimag = zimag + cimag;
-          zreal = (zreal * zreal) - (zimag * zimag);
-          zimag = (zreal * zimag) + (zimag * zreal);
-          zreal = zreal + creal;
-          zimag = zimag + cimag;
-          zreal = (zreal * zreal) - (zimag * zimag);
-          zimag = (zreal * zimag) + (zimag * zreal);
-          zreal = zreal + creal;
-          zimag = zimag + cimag;
-          zreal = (zreal * zreal) - (zimag * zimag);
-          zimag = (zreal * zimag) + (zimag * zreal);
-          zreal = zreal + creal;
-          zimag = zimag + cimag;
+          zreal += creal;
+          zimag += cimag;
+          //squaring z
+          ztemp = zreal;
+          zreal = ((zreal * zreal) - (zimag * zimag));
+          zimag = ((ztemp * zimag) );
+          zimag += zimag;
+          //adding c
+          zreal += creal;
+          zimag += cimag;
+          //squaring z
+          ztemp = zreal;
+          zreal = ((zreal * zreal) - (zimag * zimag));
+          zimag = ((ztemp * zimag) );
+          zimag += zimag;
+          //adding c
+          zreal += creal;
+          zimag += cimag;
+          //squaring z
+          ztemp = zreal;
+          zreal = ((zreal * zreal) - (zimag * zimag));
+          zimag = ((ztemp * zimag) );
+          zimag += zimag;
+          //adding c
+          zreal += creal;
+          zimag += cimag;
+          //setting z
           z.setcomp(zreal, zimag);
           if (z.sqmagnit() >= 4.0) {
             iters -= 4;
