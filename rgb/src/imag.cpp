@@ -5,10 +5,6 @@ void rescale_colors_global(std::vector<float> &zeroimg, std::vector<int> &img, i
   for (int i = 0; i < (xres*yres); i++) {
     zeroimg[i] = img[i] * maxdiv;
   }
-  //optional for rgb because those have to be ints, just use float code and convert to int
-  /*for (int i = 0; i < xres*yres; i++) {
-    img[i] = zeroimg[i];
-  }*/
 }
 /*void rescale_colors_pgm(int *img, int res, int maxiter) {
   for (int i = 0; i < res; i++) {
