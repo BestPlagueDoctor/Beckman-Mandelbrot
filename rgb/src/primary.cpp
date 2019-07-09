@@ -12,6 +12,7 @@
 int main(int argc, char **argv) {
   printf("Hello world, I will rise\n");
   int maxiter = 4096, xres = 1024, yres = 768;
+  //float xmin = -0.90, xmax = -0.50, ymin = 0, ymax = .20;
   float xmin = -2.0, xmax = 1.0, ymin = -1.2, ymax = 1.2;
   int res = xres*yres;
   //outputmode being skipped for now
