@@ -86,28 +86,12 @@ void imgmandel(int maxiter, std::vector<int> &img, int xres, int yres) {
         //adding c
         zreal += creal;
         zimag += cimag;
-        //squaring z
-        ztemp = zreal;
-        zreal = ((zreal * zreal) - (zimag * zimag));
-        zimag = (ztemp * zimag);
-        zimag += zimag;
-        //adding c
-        zreal += creal;
-        zimag += cimag;
         //setting z
         z.setcomp(zreal, zimag);
         if (z.sqmagnit() >= 4.0) {
           iters -= 7;
           z.setcomp(save.getreal(), save.getimag());
-          //looper function replaced with raw
-          for (int i = 0; i <= 4; i ++) {
-            z.multcomp(z, z);
-            z.addcomp(z, c);
-            if (z.sqmagnit() >= 4) {
-              break;
-            }
-            iters++;
-          }
+          looper(iters, z, c);
           break;
         }
       }
@@ -117,7 +101,7 @@ void imgmandel(int maxiter, std::vector<int> &img, int xres, int yres) {
 }
 
 void looper(int &iters, complexnumber z, complexnumber c) {
-  for (int i = 0; i <= 4; i ++) {
+  for (int i = 0; i <= 7; i ++) {
     z.multcomp(z, z);
     z.addcomp(z, c);
     if (z.sqmagnit() >= 4) {
