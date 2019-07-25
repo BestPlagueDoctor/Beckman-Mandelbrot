@@ -7,9 +7,6 @@ CMakeFiles/mandelbrot.dir/src/calc.cpp.o
 CMakeFiles/mandelbrot.dir/src/class.cpp.o
  ../include/proto.h
  /home/sam/Beckman-Mandelbrot/rgb/src/class.cpp
-CMakeFiles/mandelbrot.dir/src/imag.cpp.o
- ../include/proto.h
- /home/sam/Beckman-Mandelbrot/rgb/src/imag.cpp
 CMakeFiles/mandelbrot.dir/src/primary.cpp.o
  ../include/proto.h
  /home/sam/Beckman-Mandelbrot/rgb/src/primary.cpp

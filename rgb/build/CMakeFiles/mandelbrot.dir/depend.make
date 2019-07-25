@@ -7,9 +7,6 @@ CMakeFiles/mandelbrot.dir/src/calc.cpp.o: ../src/calc.cpp
 CMakeFiles/mandelbrot.dir/src/class.cpp.o: ../include/proto.h
 CMakeFiles/mandelbrot.dir/src/class.cpp.o: ../src/class.cpp
 
-CMakeFiles/mandelbrot.dir/src/imag.cpp.o: ../include/proto.h
-CMakeFiles/mandelbrot.dir/src/imag.cpp.o: ../src/imag.cpp
-
 CMakeFiles/mandelbrot.dir/src/primary.cpp.o: ../include/proto.h
 CMakeFiles/mandelbrot.dir/src/primary.cpp.o: ../src/primary.cpp
 

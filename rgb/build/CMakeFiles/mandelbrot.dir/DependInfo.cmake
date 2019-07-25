@@ -6,7 +6,6 @@ set(CMAKE_DEPENDS_LANGUAGES
 set(CMAKE_DEPENDS_CHECK_CXX
   "/home/sam/Beckman-Mandelbrot/rgb/src/calc.cpp" "/home/sam/Beckman-Mandelbrot/rgb/build/CMakeFiles/mandelbrot.dir/src/calc.cpp.o"
   "/home/sam/Beckman-Mandelbrot/rgb/src/class.cpp" "/home/sam/Beckman-Mandelbrot/rgb/build/CMakeFiles/mandelbrot.dir/src/class.cpp.o"
-  "/home/sam/Beckman-Mandelbrot/rgb/src/imag.cpp" "/home/sam/Beckman-Mandelbrot/rgb/build/CMakeFiles/mandelbrot.dir/src/imag.cpp.o"
   "/home/sam/Beckman-Mandelbrot/rgb/src/primary.cpp" "/home/sam/Beckman-Mandelbrot/rgb/build/CMakeFiles/mandelbrot.dir/src/primary.cpp.o"
   "/home/sam/Beckman-Mandelbrot/rgb/src/write.cpp" "/home/sam/Beckman-Mandelbrot/rgb/build/CMakeFiles/mandelbrot.dir/src/write.cpp.o"
   )

@@ -177,33 +177,6 @@ src/class.cpp.s:
 	$(MAKE) -f CMakeFiles/mandelbrot.dir/build.make CMakeFiles/mandelbrot.dir/src/class.cpp.s
 .PHONY : src/class.cpp.s
 
-src/imag.o: src/imag.cpp.o
-
-.PHONY : src/imag.o
-
-# target to build an object file
-src/imag.cpp.o:
-	$(MAKE) -f CMakeFiles/mandelbrot.dir/build.make CMakeFiles/mandelbrot.dir/src/imag.cpp.o
-.PHONY : src/imag.cpp.o
-
-src/imag.i: src/imag.cpp.i
-
-.PHONY : src/imag.i
-
-# target to preprocess a source file
-src/imag.cpp.i:
-	$(MAKE) -f CMakeFiles/mandelbrot.dir/build.make CMakeFiles/mandelbrot.dir/src/imag.cpp.i
-.PHONY : src/imag.cpp.i
-
-src/imag.s: src/imag.cpp.s
-
-.PHONY : src/imag.s
-
-# target to generate assembly for a file
-src/imag.cpp.s:
-	$(MAKE) -f CMakeFiles/mandelbrot.dir/build.make CMakeFiles/mandelbrot.dir/src/imag.cpp.s
-.PHONY : src/imag.cpp.s
-
 src/primary.o: src/primary.cpp.o
 
 .PHONY : src/primary.o
@@ -273,9 +246,6 @@ help:
 	@echo "... src/class.o"
 	@echo "... src/class.i"
 	@echo "... src/class.s"
-	@echo "... src/imag.o"
-	@echo "... src/imag.i"
-	@echo "... src/imag.s"
 	@echo "... src/primary.o"
 	@echo "... src/primary.i"
 	@echo "... src/primary.s"

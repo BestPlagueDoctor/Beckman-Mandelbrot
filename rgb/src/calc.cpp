@@ -49,9 +49,9 @@ void imgmandel(int maxiter, std::vector<int> &img, int xres, int yres) {
     for (x = 0; x < xres; x++) {
       float rec = x, imc = y;
       float cimag = ((imc*imcdiv)-1.2);
-      float creal = (((rec*recdiv)-2.0)); 
+      float creal = (((rec*recdiv)-2.0));
       //float cimag = ((imc*imcdiv)-0.0);
-      //float creal = (((rec*recdiv)-0.90)); 
+      //float creal = (((rec*recdiv)-0.90));
       c.setcomp(creal, cimag);
       z.setcomp(0.0,0.0);
       save.setcomp(0.0, 0.0);

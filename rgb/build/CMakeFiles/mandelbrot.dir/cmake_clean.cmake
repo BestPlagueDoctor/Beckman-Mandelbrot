@@ -1,7 +1,6 @@
 file(REMOVE_RECURSE
   "CMakeFiles/mandelbrot.dir/src/calc.cpp.o"
   "CMakeFiles/mandelbrot.dir/src/class.cpp.o"
-  "CMakeFiles/mandelbrot.dir/src/imag.cpp.o"
   "CMakeFiles/mandelbrot.dir/src/primary.cpp.o"
   "CMakeFiles/mandelbrot.dir/src/write.cpp.o"
   "mandelbrot.pdb"
