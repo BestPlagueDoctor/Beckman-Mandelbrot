@@ -1,0 +1,22 @@
+[
+{
+  "directory": "/home/sam/Beckman-Mandelbrot/rgb/build",
+  "command": "/usr/bin/c++   -I/home/sam/Beckman-Mandelbrot/rgb/include -I/home/sam/Beckman-Mandelbrot/rgb/third_party  -Ofast -O3 -DNDEBUG   -std=gnu++17 -o CMakeFiles/mandelbrot.dir/src/calc.cpp.o -c /home/sam/Beckman-Mandelbrot/rgb/src/calc.cpp",
+  "file": "/home/sam/Beckman-Mandelbrot/rgb/src/calc.cpp"
+},
+{
+  "directory": "/home/sam/Beckman-Mandelbrot/rgb/build",
+  "command": "/usr/bin/c++   -I/home/sam/Beckman-Mandelbrot/rgb/include -I/home/sam/Beckman-Mandelbrot/rgb/third_party  -Ofast -O3 -DNDEBUG   -std=gnu++17 -o CMakeFiles/mandelbrot.dir/src/class.cpp.o -c /home/sam/Beckman-Mandelbrot/rgb/src/class.cpp",
+  "file": "/home/sam/Beckman-Mandelbrot/rgb/src/class.cpp"
+},
+{
+  "directory": "/home/sam/Beckman-Mandelbrot/rgb/build",
+  "command": "/usr/bin/c++   -I/home/sam/Beckman-Mandelbrot/rgb/include -I/home/sam/Beckman-Mandelbrot/rgb/third_party  -Ofast -O3 -DNDEBUG   -std=gnu++17 -o CMakeFiles/mandelbrot.dir/src/primary.cpp.o -c /home/sam/Beckman-Mandelbrot/rgb/src/primary.cpp",
+  "file": "/home/sam/Beckman-Mandelbrot/rgb/src/primary.cpp"
+},
+{
+  "directory": "/home/sam/Beckman-Mandelbrot/rgb/build",
+  "command": "/usr/bin/c++   -I/home/sam/Beckman-Mandelbrot/rgb/include -I/home/sam/Beckman-Mandelbrot/rgb/third_party  -Ofast -O3 -DNDEBUG   -std=gnu++17 -o CMakeFiles/mandelbrot.dir/src/write.cpp.o -c /home/sam/Beckman-Mandelbrot/rgb/src/write.cpp",
+  "file": "/home/sam/Beckman-Mandelbrot/rgb/src/write.cpp"
+}
+]

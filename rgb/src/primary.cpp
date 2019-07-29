@@ -45,9 +45,8 @@ int main(int argc, char **argv) {
   }
   */
   printf("'%s': Running Mandelbrot set with params:\n", argv[0]);
-  printf(" xres: %d yres: %d maxiter %d\n", xres, yres, maxiter);
+  printf(" xres: %d yres: %d maxiter %d res %d\n", xres, yres, maxiter, res);
   printf(" xmin: %.2f xmax: %.2f ymin %.2f ymax %.2f\n", xmin, xmax, ymin, ymax);
-  printf("got hree");
   printf("----------------------------------------------------------\n");
   //allocate memory
   //call calcs(calc file, using arrays)

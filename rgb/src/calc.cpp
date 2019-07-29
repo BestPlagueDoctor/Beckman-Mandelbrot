@@ -1,5 +1,4 @@
 #include "proto.h"
-#include <iostream>
 #include <cmath>
 
 int findidx(int xres, int x, int y) {
@@ -56,7 +55,7 @@ void imgmandel(int maxiter, std::vector<int> &img, int xres, int yres) {
       z.setcomp(0.0,0.0);
       save.setcomp(0.0, 0.0);
       int iters;
-      for (iters = 0; iters < maxiter; iters+=7) {
+      for (iters = 7; iters < maxiter-7; iters+=7) {
         float zreal = z.getreal(), zimag = z.getimag(), ztemp = 0.0;
         float savereal = zreal, saveimag = zimag;
         //squaring z
@@ -117,6 +116,8 @@ void imgmandel(int maxiter, std::vector<int> &img, int xres, int yres) {
         }
       }
       img[((y*xres)+x)] = iters;
+      //printf("%d, ", iters);
+    //  printf("%d, %d)  ", ((y*xres)+x), iters);
     }
   }
 }
