@@ -15,6 +15,10 @@ vector
 /home/sam/Beckman-Mandelbrot/rgb/src/write.cpp
 proto.h
 /home/sam/Beckman-Mandelbrot/rgb/src/proto.h
+string
+-
+iostream
+-
 vector
 -
 cstdio
