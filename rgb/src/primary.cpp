@@ -67,9 +67,10 @@ int main(int argc, char **argv) {
   //calc
   //printcoord(img, xres, yres, res);
   imgmandel(maxiter, img, xres, yres);
-  rescale_colors_global(zeroimg, img, xres, yres, maxiter, res);
+  int maxval = maxiter;
+  rescale_colors_global(zeroimg, img, xres, yres, maxval, res);
   //rescale_colors_pgm(img, res, &maxiter);
-  write_ppm(filename, zeroimg, xres, yres, res, maxiter);
+  write_ppm(filename, zeroimg, xres, yres, res, maxval);
   //free(img);
   //free(zeroimg);
   return 0;

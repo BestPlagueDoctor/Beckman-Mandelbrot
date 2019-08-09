@@ -13,7 +13,7 @@ class complexnumber {
     float getimag();  
     float sqmagnit();
 };
-void rescale_colors_global(std::vector<float> &zeroimg, std::vector<int> &img, int xres, int yres, int maxiter, int res);
+void rescale_colors_global(std::vector<float> &zeroimg, std::vector<int> &img, int xres, int yres, int &maxval, int res);
 void imgmandel(int maxiter, std::vector<int> &img, int xres, int yres);
 void write_pgm(const char *filename, std::vector<int> &img, int xres, int yres, int res, int maxiter);
 void rescale_colors_pgm(std::vector<int> &img, int res, int maxiter);
@@ -21,4 +21,4 @@ void printcoord(std::vector<int> &img, int xres, int yres, int res);
 float rescale_r_ppm(std::vector<float> &zeroimg, int i, int &r); 
 float rescale_g_ppm(std::vector<float> &zeroimg, int i, int &g); 
 float rescale_b_ppm(std::vector<float> &zeroimg, int i, int &b); 
-void write_ppm(const char *filename, std::vector<float> &zeroimg, int xres, int yres, int res, int maxiter);
+void write_ppm(const char *filename, std::vector<float> &zeroimg, int xres, int yres, int res, int maxval);

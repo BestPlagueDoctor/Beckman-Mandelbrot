@@ -15,22 +15,6 @@ void setvals(std::vector<int> &img, int xres, int yres) {
   }
 }
 
-void looper(int &iters, complexnumber z, complexnumber c, float zreal, float zimag, float creal, float cimag) {
-  for (int i = 0; i <= 7; i ++) {
-    float
-    ztemp = zreal;
-    zreal = ((zreal * zreal) - (zimag * zimag));
-    zimag = (ztemp * zimag);
-    zimag += zimag;
-    //adding c
-    zreal += creal;
-    zimag += cimag;
-    if (zreal*zreal+zimag*zimag >= 4) {
-      break;
-    }
-    iters++;
-  }
-}
 
 
 void imgmandel(int maxiter, std::vector<int> &img, int xres, int yres) {
@@ -54,10 +38,14 @@ void imgmandel(int maxiter, std::vector<int> &img, int xres, int yres) {
       c.setcomp(creal, cimag);
       z.setcomp(0.0,0.0);
       save.setcomp(0.0, 0.0);
-      int iters;
-      for (iters = 7; iters < maxiter-7; iters+=7) {
-        float zreal = z.getreal(), zimag = z.getimag(), ztemp = 0.0;
-        float savereal = zreal, saveimag = zimag;
+      int iters=0;
+      float zreal = z.getreal(), zimag = z.getimag();
+      float ztemp = 0.0;
+      float savereal=zreal, saveimag=zimag;
+#if 1      
+       while ((iters < maxiter) && (zreal*zreal+zimag*zimag <= 4.0)) {
+        savereal = zreal;
+        saveimag = zimag;
         //squaring z
         ztemp = zreal;
         zreal = ((zreal * zreal) - (zimag * zimag));
@@ -106,18 +94,40 @@ void imgmandel(int maxiter, std::vector<int> &img, int xres, int yres) {
         //adding c
         zreal += creal;
         zimag += cimag;
-        //setting z
-        z.setcomp(zreal, zimag);
-        if (zreal*zreal+zimag*zimag >= 4.0) {
-          iters -= 7;
-          z.setcomp(savereal, saveimag);
-          looper(iters, z, c, zreal, zimag, creal, cimag);
-          break;
-        }
+        iters += 7;
       }
+#endif
+
+
+#if 1  
+      if ((iters >=maxiter) || (zreal*zreal+zimag*zimag >= 4.0)) {
+        iters -= 7;
+        zreal = savereal;
+        zimag = saveimag; 
+#endif
+#if 1
+        float zrsq = zreal*zreal;
+        float zisq = zimag*zimag;
+        while ((iters < maxiter) && (zrsq+zisq <= 4.0)) {
+          ztemp = zreal;
+          zreal = (zrsq) - (zisq);
+          zimag = (ztemp * zimag);
+          zimag += zimag;
+          //adding c
+          zreal += creal;
+          zimag += cimag;
+          zrsq = zreal*zreal;
+          zisq = zimag*zimag;
+          iters++;
+        }
+#endif
+#if 1
+      }
+#endif
+
       img[((y*xres)+x)] = iters;
       //printf("%d, ", iters);
-    //  printf("%d, %d)  ", ((y*xres)+x), iters);
+      //  printf("%d, %d)  ", ((y*xres)+x), iters);
     }
   }
 }

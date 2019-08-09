@@ -1,41 +1,30 @@
 #include "proto.h"
-#include <string>
-#include <iostream>
 #include <vector>
 #include <cstdio>
 #include <cmath>
+#include <iostream>
+#include <string>
 
-
-void rescale_colors_global(std::vector<float> &zeroimg, std::vector<int> &img, int xres, int yres, int maxiter, int res) {
-//  float maxdiv = 1.0 / maxiter;
-  for (int i = 0; i < (xres*yres); i++) {
-//    zeroimg[i] = img[i] * maxdiv;
-    //printf("%d, ", img[i]);
-    zeroimg[i] = img[i];
-    //if (i%1000) {
-     // printf("%.2f, ", zeroimg[i]);
-    //}
-  }
-  float total = res;
- // printf("%f", total);
-  int i;
-  auto rescaler = std::vector<float>(res+1);
-  float totalinv = 1.0f/total;
-  rescaler.resize(res+1);
+void rescale_colors_global(std::vector<float> &zeroimg, std::vector<int> &img, int xres, int yres, int &maxval, int res) {
+  float totalinv = 1.0f/float(res);
+  auto histogram = std::vector<float>(maxval+1);
   for (int j = 0; j < res; j++) {
-    rescaler[zeroimg[j]]++;
+    histogram[img[j]]++;
   }
   float sum = 0.0;
-  for (int j = 0; j < maxiter; j++) {
-    sum += rescaler[j];
-    rescaler[j] = sum * totalinv;
+  for (int j = 0; j <= maxval; j++) {
+    sum += histogram[j];
+    histogram[j] = sum * totalinv;
   }
-  for (i = 0; i < res; i++) {
-    zeroimg[i] = rescaler[i];
+
+  for (int i = 0; i < res; i++) {
+    zeroimg[i] = histogram[img[i]];
   }
+
+  //maxval = histogram[maxval];
 }
 
-void write_pgm(const char *filename, int* img, int xres, int yres, int res, int maxiter) {
+void write_pgm(const char *filename, int* img, int xres, int yres, int res, int maxval) {
   printf("Writing Mandelbrot set to filename '%s' ... \n", filename);
   FILE *ofp;
   if ((ofp = fopen(filename, "w")) == NULL) {
@@ -45,7 +34,7 @@ void write_pgm(const char *filename, int* img, int xres, int yres, int res, int 
   //PGM header
   fprintf(ofp, "P2\n");
   fprintf(ofp, "%d %d \n", xres, yres);
-  fprintf(ofp, "%d \n", maxiter);
+  fprintf(ofp, "%d \n", maxval);
   for (int i = 0; i < res; i++) {
     if (i%xres == 0) {
       fprintf(ofp, "\n");
@@ -71,7 +60,7 @@ float rescale_b_ppm(std::vector<float> &zeroimg, int i, int &b) {
 }
 
 
-void write_ppm(const char *filename, std::vector<float> &zeroimg, int xres, int yres, int res, int maxiter) {
+void write_ppm(const char *filename, std::vector<float> &zeroimg, int xres, int yres, int res, int maxval) {
   FILE *ofp;
   if ((ofp = fopen(filename, "w")) == NULL) {
     perror("Failed to open output file\n");
@@ -80,22 +69,24 @@ void write_ppm(const char *filename, std::vector<float> &zeroimg, int xres, int 
   //ppm header
   fprintf(ofp, "P3\n");
   fprintf(ofp, "%d %d \n", xres, yres);
-  fprintf(ofp, "%d \n", maxiter);
+#if 1
+  fprintf(ofp, "%d \n", maxval);
+#else
+  fprintf(ofp, "%d \n", int(ceilf(10.0f * (logf(maxval)))));
+#endif
   int i; 
   for (i = 0; i < res; i++) {
     int r = 0, g = 0, b = 0;
-    r = maxiter * zeroimg[i];
-    //g = zeroimg[i];
-    //b = zeroimg[i];
-    //r = 255-zeroimg[i];
-    //g = 255-zeroimg[i];
-    //b = zeroimg[i];
+#if 1
+    r = maxval - (maxval * zeroimg[i]);
+    b = maxval * zeroimg[i];
+#else 
+    r = 10.0f * (logf((1 * zeroimg[i])));
+#endif
     fprintf(ofp, "%d %d %d ", r, g, b);
-    //fprintf(ofp, "%.1f %.1f %.1f  ", zeroimg[i], zeroimg[i], zeroimg[i]);
     if (i%xres == 0) {
       fprintf(ofp, "\n");
     }
-    //fprintf(ofp, "%d ", zeroimg[i]);
   }
   fclose(ofp);
 }
