@@ -1,0 +1,3 @@
+/home/sam/Beckman-Mandelbrot/rgb/array/build/CMakeFiles/rebuild_cache.dir
+/home/sam/Beckman-Mandelbrot/rgb/array/build/CMakeFiles/mandelbrot.dir
+/home/sam/Beckman-Mandelbrot/rgb/array/build/CMakeFiles/edit_cache.dir

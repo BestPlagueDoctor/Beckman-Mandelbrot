@@ -1,0 +1,28 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../include/proto.h
+stdio.h
+-
+vector
+-
+
+/home/sam/Beckman-Mandelbrot/rgb/vector/src/write.cpp
+proto.h
+/home/sam/Beckman-Mandelbrot/rgb/vector/src/proto.h
+vector
+-
+cstdio
+-
+cmath
+-
+iostream
+-
+string
+-
+
