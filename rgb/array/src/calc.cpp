@@ -1,4 +1,5 @@
 #include "proto.h"
+#include <immintrin.h>
 #include <cmath>
 
 int findidx(int xres, int x, int y) {
@@ -21,8 +22,6 @@ void imgmandel(int maxiter, int *img, int xres, int yres) {
   setvals(img, xres, yres);
   float recdiv = 3.0/(xres);
   float imcdiv = 2.4/yres;
-  //float recdiv = .4/(xres);
-  //float imcdiv = .2/yres;
   complexnumber c;
   complexnumber z;
   complexnumber save;
@@ -33,8 +32,6 @@ void imgmandel(int maxiter, int *img, int xres, int yres) {
       float rec = x, imc = y;
       float cimag = ((imc*imcdiv)-1.2);
       float creal = (((rec*recdiv)-2.0));
-      //float cimag = ((imc*imcdiv)-0.0);
-      //float creal = (((rec*recdiv)-0.90));
       c.setcomp(creal, cimag);
       z.setcomp(0.0,0.0);
       save.setcomp(0.0, 0.0);
@@ -42,7 +39,7 @@ void imgmandel(int maxiter, int *img, int xres, int yres) {
       float zreal = z.getreal(), zimag = z.getimag();
       float ztemp = 0.0;
       float savereal=zreal, saveimag=zimag;
-#if 1      
+#if 1
        while ((iters < maxiter) && (zreal*zreal+zimag*zimag <= 4.0)) {
         savereal = zreal;
         saveimag = zimag;
@@ -98,12 +95,11 @@ void imgmandel(int maxiter, int *img, int xres, int yres) {
       }
 #endif
 
-
-#if 1  
+#if 1
       if ((iters >=maxiter) || (zreal*zreal+zimag*zimag >= 4.0)) {
         iters -= 7;
         zreal = savereal;
-        zimag = saveimag; 
+        zimag = saveimag;
 #endif
 #if 1
         float zrsq = zreal*zreal;

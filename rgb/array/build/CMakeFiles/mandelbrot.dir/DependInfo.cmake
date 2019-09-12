@@ -5,6 +5,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
   "/home/sam/Beckman-Mandelbrot/rgb/array/src/calc.cpp" "/home/sam/Beckman-Mandelbrot/rgb/array/build/CMakeFiles/mandelbrot.dir/src/calc.cpp.o"
+  "/home/sam/Beckman-Mandelbrot/rgb/array/src/calc_simd.cpp" "/home/sam/Beckman-Mandelbrot/rgb/array/build/CMakeFiles/mandelbrot.dir/src/calc_simd.cpp.o"
   "/home/sam/Beckman-Mandelbrot/rgb/array/src/class.cpp" "/home/sam/Beckman-Mandelbrot/rgb/array/build/CMakeFiles/mandelbrot.dir/src/class.cpp.o"
   "/home/sam/Beckman-Mandelbrot/rgb/array/src/primary.cpp" "/home/sam/Beckman-Mandelbrot/rgb/array/build/CMakeFiles/mandelbrot.dir/src/primary.cpp.o"
   "/home/sam/Beckman-Mandelbrot/rgb/array/src/write.cpp" "/home/sam/Beckman-Mandelbrot/rgb/array/build/CMakeFiles/mandelbrot.dir/src/write.cpp.o"

@@ -6,11 +6,25 @@
 
 #IncludeRegexTransform: 
 
-../include/proto.h
-stdio.h
+/home/sam/Beckman-Mandelbrot/rgb/array/src/calc.cpp
+proto.h
+/home/sam/Beckman-Mandelbrot/rgb/array/src/proto.h
+immintrin.h
 -
-vector
+cmath
 -
+
+/home/sam/Beckman-Mandelbrot/rgb/array/src/calc_simd.cpp
+proto.h
+/home/sam/Beckman-Mandelbrot/rgb/array/src/proto.h
+cmath
+-
+immintrin.h
+-
+
+/home/sam/Beckman-Mandelbrot/rgb/array/src/class.cpp
+proto.h
+/home/sam/Beckman-Mandelbrot/rgb/array/src/proto.h
 
 /home/sam/Beckman-Mandelbrot/rgb/array/src/primary.cpp
 memory
@@ -28,5 +42,25 @@ math.h
 string.h
 -
 vector
+-
+
+/home/sam/Beckman-Mandelbrot/rgb/array/src/proto.h
+stdio.h
+-
+vector
+-
+
+/home/sam/Beckman-Mandelbrot/rgb/array/src/write.cpp
+proto.h
+/home/sam/Beckman-Mandelbrot/rgb/array/src/proto.h
+vector
+-
+cstdio
+-
+cmath
+-
+iostream
+-
+string
 -
 
