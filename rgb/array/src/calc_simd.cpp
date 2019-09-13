@@ -30,14 +30,14 @@ void imgmandel_simd(int maxiter, int *img, int xres, int yres) {
       __m256 zimag = _mm256_set1_ps(zi);
       __m256 ztemp = _mm256_setzero_ps();
       __m256 savereal = zreal, saveimag = zimag;
-      __m256 holder = _mm256_setzero_ps();
+      __m256 comp = _mm256_setzero_ps();
       
-      holder = (_mm256_cmp_ps(_mm256_add_ps(_mm256_mul_ps(zreal, zreal), _mm256_mul_ps(zimag, zimag)), fourcomp, 2));
+      comp = (_mm256_cmp_ps(_mm256_add_ps(_mm256_mul_ps(zreal, zreal), _mm256_mul_ps(zimag, zimag)), fourcomp, 2));
 
 #if 1
-       while ((iters < maxiter) && holder[0] == 1) {
+       while ((iters < maxiter) && comp[0] == 1) {
         //squaring z
-        ztemp = _mm256_set1_ps(zreal[0]);
+        ztemp = zreal;
         //zreal = ((zreal * zreal) - (zimag * zimag));
         zreal = _mm256_sub_ps(_mm256_mul_ps(zreal, zreal), _mm256_mul_ps(zimag, zimag));
         //zimag = (ztemp * zimag);
@@ -51,7 +51,7 @@ void imgmandel_simd(int maxiter, int *img, int xres, int yres) {
         //zimag += cimag;
         zimag = _mm256_add_ps(zimag, cimag);
         iters += 1;
-        holder = (_mm256_cmp_ps(_mm256_add_ps(_mm256_mul_ps(zreal, zreal), _mm256_mul_ps(zimag, zimag)), fourcomp, 2));
+        comp = (_mm256_cmp_ps(_mm256_add_ps(_mm256_mul_ps(zreal, zreal), _mm256_mul_ps(zimag, zimag)), fourcomp, 2));
       }
 #endif
 #if 0
@@ -95,23 +95,28 @@ void imgmandel_simd(int maxiter, int *img, int xres, int yres) {
 }
 }
 
-void ascii(int maxiter, int *img, int xres, int yres) {
-  for (int i = 0; i < xres*yres; i++) {
-    if (img[i] >= maxiter) {
-      printf("*");
-    }
-    else {
-      printf(" ");
-    }
-    if (i%50 == 0) {
-      printf("\n");
-    }
+void pgm(int maxiter, int *img, int xres, int yres) {
+  const char filename[1024] = "haha.pgm";
+  FILE *ofp;
+  if ((ofp = fopen(filename, "w")) == NULL) {
+    perror("FAILURE");
+    return;
   }
+  fprintf(ofp, "P2\n");
+  fprintf(ofp, "%d %d \n", xres, yres);
+  fprintf(ofp, "%d \n", maxiter);
+  for (int i = 0; i < xres*yres; i++) {
+    if(i%xres == 0) {
+      fprintf(ofp, "\n");
+    }
+    fprintf(ofp, "%d ", img[i]);
+  }
+  printf("size of img is %d \n", sizeof(img)/sizeof(int));
 }
 
-
 int main() {
-  int *img = (int*) malloc(50*50*sizeof(int));
-  imgmandel_simd(4096, img, 50, 50);
-  ascii(4096, img, 50, 50);
+  int *img = (int*) malloc(1024*768*sizeof(int));
+  imgmandel_simd(4096, img, 1024, 768);
+  pgm(4096, img, 1024, 768);
+  free(img);
 }

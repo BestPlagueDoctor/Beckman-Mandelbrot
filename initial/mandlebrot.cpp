@@ -132,7 +132,6 @@ void mandlebrot_text_count(float xmin, float ymin, float xmax, float ymax, int x
   }
 }
 
-
 void mandlebrot_pgm_ascii(float xmin, float ymin, float xmax, float ymax, int xres, int yres, int maxiter, 
                           const char *filename) {
   printf("Writing Mandelbrot set to filename '%s'....\n", filename);
