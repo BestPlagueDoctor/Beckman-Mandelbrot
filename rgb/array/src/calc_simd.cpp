@@ -20,8 +20,8 @@ void imgmandel_simd(int maxiter, int *img, int xres, int yres) {
     int x;
     for (x = 0; x < xres; x+=1) {
       int iters=0;
-      float ci = ((x*imcdiv)-1.2);
-      float cr = (((y*recdiv)-2.0));
+      float ci = ((y*imcdiv)-1.2);
+      float cr = (((x*recdiv)-2.0));
       __m256 creal  = _mm256_set1_ps(cr);
       __m256 cimag  = _mm256_set1_ps(ci);
       //float zreal = zr, zimag = zi;
