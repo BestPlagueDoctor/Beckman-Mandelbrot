@@ -1,1 +1,0 @@
-/usr/bin/c++  -Ofast -O3 -DNDEBUG   CMakeFiles/mandelbrot.dir/src/calc.cpp.o CMakeFiles/mandelbrot.dir/src/class.cpp.o CMakeFiles/mandelbrot.dir/src/primary.cpp.o CMakeFiles/mandelbrot.dir/src/write.cpp.o  -o mandelbrot 
