@@ -1,0 +1,6 @@
+Original(array): 30.24
+Linear Interp: 23
+Nested X Y: 11.7
+Inlined calcs (not unrolled): 7.17
+Inlined calcs (unrolled): 2.85
+
