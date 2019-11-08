@@ -1,10 +1,24 @@
 #include <immintrin.h>
-#include <cstdio>
+#include <stdio.h>
+#include <string.h>
 
+union lane {
+  __m256 vec;
+  float lane1 = 0.0;
+  float lane2 = 0.0;
+  float lane3 = 0.0;
+  float lane4 = 0.0;
+  float lane5 = 0.0;
+  float lane6 = 0.0;
+  float lane7 = 0.0;
+  float lane8 = 0.0;
+};
+
+__m256 test = _mm256_set1_ps(5.0);
+
+lane LANE;
 int main() {
-  __m256 test1 = {1, 2, 3, 4};
-  __m256 test2 = {1, 2, 3, 4};
-  __m256 test3 = _mm256_add_ps (test1, test2);
-  printf("%.2f %.2f %.2f %.2f", test3[0], test3[1], test3[2], test3[3]);
-  
+  for(int i = 0; i <= 8; i++) {
+
+  }
 }
