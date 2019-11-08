@@ -52,6 +52,7 @@ void imgmandel_simd(int maxiter, int *img, int xres, int yres) {
 #if 1
        while ((iters < maxiter) && comp.vec[0] == 1) {
         //adding comment to test git
+        //adding another comment
         //squaring z
         ztemp = zreal;
         //zreal = ((zreal * zreal) - (zimag * zimag));
