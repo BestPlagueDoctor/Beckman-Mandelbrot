@@ -1,7 +1,6 @@
 #include <immintrin.h>
 #include <stdio.h>
 #include <string.h>
-<<<<<<< HEAD
 
 union alley {
   __m256 vec;
@@ -9,8 +8,6 @@ union alley {
     float lanes[8];
   };
 };
-=======
->>>>>>> b7a7cda1ba989c98d13b789ed21cd3e29ebb20d7
 
 union lane {
   __m256 vec;
@@ -28,17 +25,14 @@ __m256 test = _mm256_set1_ps(5.0);
 
 lane LANE;
 int main() {
-<<<<<<< HEAD
   alley arrowhead;
   for(int i=0;i<8;i++){
     arrowhead.lanes[i] = i*31.1;
   }
   for(int i=0;i<8;i++){
     printf("%.2f   ", arrowhead.vec[i]);
-=======
   for(int i = 0; i <= 8; i++) {
 
->>>>>>> b7a7cda1ba989c98d13b789ed21cd3e29ebb20d7
   }
 }
 
