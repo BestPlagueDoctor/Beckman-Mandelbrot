@@ -21,6 +21,3 @@ int main() {
   }
 }
 
-//added comment for git test
-////added anotha
-/////one more

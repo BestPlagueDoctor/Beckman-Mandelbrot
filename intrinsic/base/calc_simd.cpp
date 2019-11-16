@@ -50,9 +50,7 @@ void imgmandel_simd(int maxiter, int *img, int xres, int yres) {
       comp.vec = (_mm256_cmp_ps(_mm256_add_ps(_mm256_mul_ps(zreal, zreal), _mm256_mul_ps(zimag, zimag)), fourcomp, 2));
 
 #if 1
-       while ((iters < maxiter) && comp.vec[0] == 1) {
-        //adding comment to test git
-        //adding another comment
+      while ((iters < maxiter) && comp.vec[0] == 1) {
         //squaring z
         ztemp = zreal;
         //zreal = ((zreal * zreal) - (zimag * zimag));
@@ -80,7 +78,7 @@ void imgmandel_simd(int maxiter, int *img, int xres, int yres) {
 
 
 #if 0
-       while ((iters < maxiter) && comp.lanes[0] == 1) {
+      while ((iters < maxiter) && comp.lanes[0] == 1) {
         //squaring z
         main.ztemp = main.zreal;
         //zreal = ((zreal * zreal) - (zimag * zimag));
@@ -109,68 +107,68 @@ void imgmandel_simd(int maxiter, int *img, int xres, int yres) {
 
 
 #if 0
-       while((iters < maxiter) && (zreal*zreal+zimag*zimag) <= 4.0) {
-         ztemp = _mm256_set1_ps(zr);
-         zreal = _mm256_
+      while((iters < maxiter) && (zreal*zreal+zimag*zimag) <= 4.0) {
+        ztemp = _mm256_set1_ps(zr);
+        zreal = _mm256_
 #endif
 
 #if 0
-      if ((iters >=maxiter) || (zreal*zreal+zimag*zimag >= 4.0)) {
+      if((iters >=maxiter) || (zreal*zreal+zimag*zimag >= 4.0)) {
         iters -= 1;
         zreal = savereal;
         zimag = saveimag;
 #endif
 #if 0
-        float zrsq = zreal*zreal;
-        float zisq = zimag*zimag;
-        while ((iters < maxiter) && (zrsq+zisq <= 4.0)) {
-          ztemp = zreal;
-          zreal = (zrsq) - (zisq);
-          zimag = (ztemp * zimag);
-          zimag += zimag;
-          //adding c
-          zreal += creal;
-          zimag += cimag;
-          zrsq = zreal*zreal;
-          zisq = zimag*zimag;
-          iters++;
-        }
+      float zrsq = zreal*zreal;
+      float zisq = zimag*zimag;
+      while ((iters < maxiter) && (zrsq+zisq <= 4.0)) {
+        ztemp = zreal;
+        zreal = (zrsq) - (zisq);
+        zimag = (ztemp * zimag);
+        zimag += zimag;
+        //adding c
+        zreal += creal;
+        zimag += cimag;
+        zrsq = zreal*zreal;
+        zisq = zimag*zimag;
+        iters++;
+      }
 #endif
 #if 1
-      //}
+    //}
 #endif
 
       //img[((y*xres)+x)] = iters;
       //printf("%d, ", iters);
       //  printf("%d, %d)  ", ((y*xres)+x), iters);
-    //}
-  //}
-  }
-}
-}
-
-void pgm(int maxiter, int *img, int xres, int yres) {
-  const char filename[1024] = "haha.pgm";
-  FILE *ofp;
-  if ((ofp = fopen(filename, "w")) == NULL) {
-    perror("FAILURE");
-    return;
-  }
-  fprintf(ofp, "P2\n");
-  fprintf(ofp, "%d %d \n", xres, yres);
-  fprintf(ofp, "%d \n", maxiter);
-  for (int i = 0; i < xres*yres; i++) {
-    if(i%xres == 0) {
-      fprintf(ofp, "\n");
+      //}
+      //}
+          }
+      }
     }
-    fprintf(ofp, "%d ", img[i]);
-  }
-  printf("size of img is %d \n", sizeof(img)/sizeof(int));
-}
 
-int main() {
-  int *img = (int*) malloc(1024*768*sizeof(int));
-  imgmandel_simd(4096, img, 1024, 768);
-  pgm(4096, img, 1024, 768);
-  free(img);
-}
+    void pgm(int maxiter, int *img, int xres, int yres) {
+      const char filename[1024] = "haha.pgm";
+      FILE *ofp;
+      if ((ofp = fopen(filename, "w")) == NULL) {
+        perror("FAILURE");
+        return;
+      }
+      fprintf(ofp, "P2\n");
+      fprintf(ofp, "%d %d \n", xres, yres);
+      fprintf(ofp, "%d \n", maxiter);
+      for (int i = 0; i < xres*yres; i++) {
+        if(i%xres == 0) {
+          fprintf(ofp, "\n");
+        }
+        fprintf(ofp, "%d ", img[i]);
+      }
+      printf("size of img is %d \n", sizeof(img)/sizeof(int));
+    }
+
+    int main() {
+      int *img = (int*) malloc(1024*768*sizeof(int));
+      imgmandel_simd(4096, img, 1024, 768);
+      pgm(4096, img, 1024, 768);
+      free(img);
+    }
