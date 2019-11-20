@@ -18,6 +18,7 @@ struct mainobj {
   set ztemp;
 };
 
+
 void fillset(mainobj mainset, int &x, int &y, int xres, float imcdiv, float recdiv, int *img) {
   for(int i=0;i<8;i++) {
     if(mainset.iters.lanes[i] == -1) {
@@ -25,9 +26,12 @@ void fillset(mainobj mainset, int &x, int &y, int xres, float imcdiv, float recd
       mainset.pixels.lanes[i] = x;
       mainset.iters.lanes[i] = 0;
       x++;
+      printf("%d", x);
       if(x >= xres) {
         x=0;
         y++;
+        printf("%d", x);
+        printf("%d", y);
       }
       mainset.creal.lanes[i] = ((y*imcdiv)-1.2);
       mainset.cimag.lanes[i] = ((x*recdiv)-2.0);
@@ -38,16 +42,6 @@ void fillset(mainobj mainset, int &x, int &y, int xres, float imcdiv, float recd
   }
 }
 
-bool isempty(set iters) {
-  for (int i=0; i<8; i++) {
-    if (iters.lanes[i] == -1) {
-      return true;
-    }
-    else {
-      return false;
-    }
-  }
-}
 
 void calcloop(mainobj mainset, int &x, int &y, int xres, float imcdiv, float recdiv, __m256 one, int *img) {
   mainset.ztemp.vec = mainset.zreal.vec;
@@ -66,6 +60,17 @@ void calcloop(mainobj mainset, int &x, int &y, int xres, float imcdiv, float rec
   fillset(mainset, x, y, xres, imcdiv, recdiv, img);
 }
 
+bool isempty(set iters) {
+  for (int i=0; i<8; i++) {
+    if (iters.lanes[i] == -1) {
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+}
+
 void initloop(int maxiter, int *img, int xres, int yres) {
   float recdiv = 3.0/xres;
   float imcdiv = 2.4/yres;
@@ -80,35 +85,42 @@ void initloop(int maxiter, int *img, int xres, int yres) {
   int ycoord = 0;
   mainobj mainset;
   mainset.pixels.vec = _mm256_set1_ps(-1.0);
+  printf("HERE");
   fillset(mainset, xcoord, ycoord, xres, imcdiv, recdiv, img);
+  printf("HERE");
   while ((xcoord*ycoord)<(xres*yres)) {
     calcloop(mainset, xcoord, ycoord, xres, imcdiv, recdiv, one, img);
-    //TODO storefunc;
   }
 }
 
 void pgm(int maxiter, int *img, int xres, int yres) {
-    const char filename[1024] = "haha.pgm";
-    FILE *ofp;
-    if ((ofp = fopen(filename, "w")) == NULL) {
+  const char filename[1024] = "haha.pgm";
+  FILE *ofp;
+  if ((ofp = fopen(filename, "w")) == NULL) {
     perror("FAILURE");
     return;
-    }
-    fprintf(ofp, "P2\n");
-    fprintf(ofp, "%d %d \n", xres, yres);
-    fprintf(ofp, "%d \n", maxiter);
-    for (int i = 0; i < xres*yres; i++) {
+  }
+  fprintf(ofp, "P2\n");
+  fprintf(ofp, "%d %d \n", xres, yres);
+  fprintf(ofp, "%d \n", maxiter);
+  for (int i = 0; i < xres*yres; i++) {
     if(i%xres == 0) {
-        fprintf(ofp, "\n");
+      fprintf(ofp, "\n");
     }
     fprintf(ofp, "%d ", img[i]);
-    }
-    printf("size of img is %d \n", sizeof(img)/sizeof(int));
+  }
+  printf("size of img is %d \n", sizeof(img)/sizeof(int));
 }
 
 int main() {
-    int *img = (int*) malloc(1024*768*sizeof(int));
-    initloop(4096, img, 1024, 768);
-    pgm(4096, img, 1024, 768);
-    free(img);
+  printf("MADE IT:");
+  int *img = (int*) malloc(1024*768*sizeof(int));
+  printf("HERE");
+  initloop(4096, img, 1024, 768);
+  pgm(4096, img, 1024, 768);
+  free(img);
 }
+
+
+
+
