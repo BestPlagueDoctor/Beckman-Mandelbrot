@@ -28,12 +28,12 @@ struct mainobj {
   set zimag;
   set ztemp;
   //x and y represent current progress through the res
-  int x;
-  int y;
+  float x;
+  float y;
 };
 
 
-void fillset(mainobj &mainset, int xres, int imcdiv, int recdiv) {
+void fillset(mainobj &mainset, int xres, float imcdiv, float recdiv) {
   //This routine needs to be fixed so that it doesn't suck
   for(int i=0;i<LANE_SIZE;i++) {
     if (mainset.iters.lanes[i] == LANE_EMPTY) {
@@ -42,6 +42,8 @@ void fillset(mainobj &mainset, int xres, int imcdiv, int recdiv) {
         mainset.x = 0;
         mainset.y++;
       }
+      mainset.iters.lanes[i] = 0;
+      //printf("%d\n", mainset.x);
       mainset.zreal.lanes[i] = 0;
       mainset.zimag.lanes[i] = 0;
       mainset.ztemp.lanes[i] = 0;
@@ -58,7 +60,7 @@ void cleanup(mainobj &mainset, int xres, int yres, int *img, int maxiter, int &s
   //This routine needs to clean finshed lanes and store the iteration count before flagging said lanes as finished.
   for (int i=0;i<LANE_SIZE;i++) {
     if (mainset.iters.lanes[i] == maxiter) {
-      img[(mainset.y*xres)+mainset.x+i] = mainset.iters.lanes[i];
+      img[(int(mainset.y)*xres)+int(mainset.x)+i] = mainset.iters.lanes[i];
 //      printf("%d\n", mainset.iters.lanes[i]);
       mainset.iters.lanes[i] = LANE_EMPTY;
       if (mainset.y*xres+mainset.x+i >= ((xres*yres)-8)) {
