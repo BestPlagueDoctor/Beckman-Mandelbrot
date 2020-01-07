@@ -59,7 +59,8 @@ void fillset(mainobj &mainset, int xres, float imcdiv, float recdiv) {
 void cleanup(mainobj &mainset, int xres, int yres, int *img, int maxiter, int &sentinal) {
   //This routine needs to clean finshed lanes and store the iteration count before flagging said lanes as finished.
   for (int i=0;i<LANE_SIZE;i++) {
-    if (mainset.iters.lanes[i] == maxiter) {
+    if (mainset.iters.lanes[i] == maxiter || (mainset.zreal.lanes[i] * mainset.zreal.lanes[i] \
+         + mainset.zimag.lanes[i] + mainset.zimag.lanes[i]) > 4.0) {
       img[(int(mainset.y)*xres)+int(mainset.x)+i] = mainset.iters.lanes[i];
 //      printf("%d\n", mainset.iters.lanes[i]);
       mainset.iters.lanes[i] = LANE_EMPTY;
@@ -73,7 +74,7 @@ void cleanup(mainobj &mainset, int xres, int yres, int *img, int maxiter, int &s
 }
 
 void calcloop(mainobj &mainset, __m256 one) {
-  //Nice
+  //may want to look into this actually
   mainset.ztemp.vec = mainset.zreal.vec;
   //zreal = ((zreal * zreal) - (zimag * zimag));
   mainset.zreal.vec = _mm256_sub_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec), _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec));
@@ -106,7 +107,6 @@ void initloop(int maxiter, int *img, int xres, int yres) {
   mainset.y = 0;
   //AYYYYY this dont work at all
   mainset.iters.vec = _mm256_set1_ps(-1.0);
-  mainset.zreal.vec = _mm256_set1_ps(-2.0);
   int sentinal = 0;
   while (sentinal < 8) {
     cleanup(mainset, xres, yres, img, maxiter, sentinal);
