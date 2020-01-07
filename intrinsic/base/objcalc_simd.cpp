@@ -19,101 +19,140 @@ union set {
 };
 
 struct mainobj {
-  //iters is the number of iterations the vector has undergone
+  // iters is the number of iterations the vector has undergone
   set iters;
-  //creal-ztemp are the operands of the set
+
+  // creal-ztemp are the operands of the set
   set creal;
   set cimag;
   set zreal;
   set zimag;
   set ztemp;
-  //x and y represent current progress through the res
-  float x;
-  float y;
+
+  set px; // pixel associated with this lane
+  set py; // pixel associated with this lane
+
+  int maxiter;
+
+  // x and y represent current progress through the img,
+  // the next pixel to be processed in the "work queue"...
+  int x;
+  int y;
+
+  int xres;
+  int yres;
+  int numpixels;
+  float imcdiv;
+  float recdiv;
+
+  float cx0;
+  float cy0;
+  float cx1;
+  float cy1;
+  float cw;
+  float ch;
 };
 
 
-void fillset(mainobj &mainset, int xres, float imcdiv, float recdiv) {
-  //This routine needs to be fixed so that it doesn't suck
-  for(int i=0;i<LANE_SIZE;i++) {
+void cleanup(mainobj &mainset, int *img, int &sentinel) {
+  //This routine needs to clean finshed lanes and store the iteration count before flagging said lanes as finished.
+  for (int i=0; i<LANE_SIZE; i++) {
+    float zmag2 = mainset.zreal.lanes[i]*mainset.zreal.lanes[i] + mainset.zimag.lanes[i]*mainset.zimag.lanes[i];
+    if (mainset.iters.lanes[i] >= mainset.maxiter || zmag2 > 4.0) {
+      int pxind = mainset.py.lanes[i]*mainset.xres + mainset.px.lanes[i];
+      img[pxind] = mainset.iters.lanes[i];
+//      printf("%d\n", mainset.iters.lanes[i]);
+      mainset.iters.lanes[i] = LANE_EMPTY;
+      if (pxind >= (mainset.numpixels - 8)) {
+        mainset.iters.lanes[i] = LANE_FINISHED;
+        sentinel++;
+        printf("%d\n", sentinel);
+      }
+    }
+  }
+}
+
+
+void fillset(mainobj &mainset) {
+  for (int i=0; i<LANE_SIZE; i++) {
     if (mainset.iters.lanes[i] == LANE_EMPTY) {
       mainset.x++;
-      if(mainset.x == xres) {
+      if(mainset.x == mainset.xres) {
         mainset.x = 0;
         mainset.y++;
       }
+
       mainset.iters.lanes[i] = 0;
       //printf("%d\n", mainset.x);
       mainset.zreal.lanes[i] = 0;
       mainset.zimag.lanes[i] = 0;
       mainset.ztemp.lanes[i] = 0;
-      mainset.creal.lanes[i] = ((mainset.y*imcdiv)-Y_AXIS);
-      mainset.cimag.lanes[i] = ((mainset.x*recdiv)-X_AXIS);
+      mainset.px.lanes[i] = mainset.x;
+      mainset.py.lanes[i] = mainset.y;
+      mainset.creal.lanes[i] = (mainset.px.lanes[i]*mainset.recdiv + mainset.cx0);
+      mainset.cimag.lanes[i] = (mainset.py.lanes[i]*mainset.imcdiv + mainset.cy0);
     }
+
+#if 0
     if (mainset.iters.lanes[i] == LANE_FINISHED) {
       //filler
     }
+    //for (int j = 0; j < 8; j++) {
+    //  printf("%.2f ", mainset.iters.lanes[i]);
+    //}
+    //printf("\n");
+#endif
   }
 }
 
-void cleanup(mainobj &mainset, int xres, int yres, int *img, int maxiter, int &sentinal) {
-  //This routine needs to clean finshed lanes and store the iteration count before flagging said lanes as finished.
-  for (int i=0;i<LANE_SIZE;i++) {
-    if (mainset.iters.lanes[i] == maxiter || (mainset.zreal.lanes[i] * mainset.zreal.lanes[i] \
-         + mainset.zimag.lanes[i] + mainset.zimag.lanes[i]) > 4.0) {
-      img[(int(mainset.y)*xres)+int(mainset.x)+i] = mainset.iters.lanes[i];
-//      printf("%d\n", mainset.iters.lanes[i]);
-      mainset.iters.lanes[i] = LANE_EMPTY;
-      if (mainset.y*xres+mainset.x+i >= ((xres*yres)-8)) {
-        mainset.iters.lanes[i] = LANE_FINISHED;
-        sentinal++;
-        printf("%d\n", sentinal);
-      }
-    }
-  }
-}
 
-void calcloop(mainobj &mainset, __m256 one) {
-  //may want to look into this actually
-  mainset.ztemp.vec = mainset.zreal.vec;
-  //zreal = ((zreal * zreal) - (zimag * zimag));
-  mainset.zreal.vec = _mm256_sub_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec), _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec));
-  //zimag = (ztemp * zimag);
-  mainset.zimag.vec = _mm256_mul_ps(mainset.ztemp.vec, mainset.zimag.vec);
-  //zimag += zimag;
-  mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.zimag.vec);
-  //adding c
-  //zreal += creal;
-  mainset.zreal.vec = _mm256_add_ps(mainset.zreal.vec, mainset.creal.vec);
-  //zimag += cimag;
-  mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.cimag.vec);
-  mainset.iters.vec = _mm256_add_ps(mainset.iters.vec, one);
-  //fillset(mainset, xres, imcdiv, recdiv, img); ????
+void calcloop(mainobj &mainset) {
+  __m256 one = _mm256_set1_ps(1.0);
+  mainset.ztemp.vec = mainset.zreal.vec;                                   //zreal = ((zreal * zreal) - (zimag * zimag));
+  mainset.zreal.vec = _mm256_sub_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec), _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec)); //zimag = (ztemp * zimag);
+  mainset.zimag.vec = _mm256_mul_ps(mainset.ztemp.vec, mainset.zimag.vec); //zimag += zimag;
+  mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.zimag.vec); //adding c
+  mainset.zreal.vec = _mm256_add_ps(mainset.zreal.vec, mainset.creal.vec); //zreal += creal;
+  mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.cimag.vec); //zimag += cimag;
+  mainset.iters.vec = _mm256_add_ps(mainset.iters.vec, one); // increment iteration count
 }
 
 
 void initloop(int maxiter, int *img, int xres, int yres) {
   //The init here needs to be cleaned and more readable
   printf("Im an init and i go here");
-  float recdiv = 3.0/xres;
-  float imcdiv = 2.4/yres;
-  //float incrx[LANE_SIZE] = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f};
-  //__m256 incrxvec;
-  //incrxvec = _mm256_loadu_ps(incrx);
-  //incrxvec = _mm256_mul_ps(incrxvec, _mm256_set1_ps(imcdiv));
-  __m256 one = _mm256_set1_ps(1.0);
+
   mainobj mainset;
+
+  mainset.iters.vec = _mm256_set1_ps(-1.0);
+ 
+  mainset.maxiter = maxiter;
+
   mainset.x = 0;
   mainset.y = 0;
-  //AYYYYY this dont work at all
-  mainset.iters.vec = _mm256_set1_ps(-1.0);
-  int sentinal = 0;
-  while (sentinal < 8) {
-    cleanup(mainset, xres, yres, img, maxiter, sentinal);
-    fillset(mainset, xres, imcdiv, recdiv);
-    calcloop(mainset, one);
+  mainset.xres = xres;
+  mainset.yres = yres;  
+  mainset.numpixels = xres*yres;
+
+  // initialize cartesian coordinate window
+  mainset.cx0 = -2;
+  mainset.cy0 = -1.2;
+  mainset.cx1 = 1;
+  mainset.cy1 = 1.2;
+  mainset.cw = mainset.cx1-mainset.cx0; 
+  mainset.ch = mainset.cy1-mainset.cy0; 
+
+  mainset.recdiv = mainset.cw/mainset.xres;
+  mainset.imcdiv = mainset.ch/mainset.yres;
+
+  int sentinel = 0;
+  while (sentinel < 8) {
+    cleanup(mainset, img, sentinel);
+    fillset(mainset);
+    calcloop(mainset);
   }
 }
+
 
 void pgm(int maxiter, int *img, int xres, int yres) {
   const char filename[1024] = "mande.pgm";
