@@ -1,3 +1,4 @@
+//Unroll time
 #include "proto.h"
 #include <cmath>
 #include <stdio.h>
@@ -61,12 +62,10 @@ void cleanup(mainobj &mainset, int *img, int &sentinel) {
     if (mainset.iters.lanes[i] >= mainset.maxiter || zmag2 > 4.0) {
       int pxind = mainset.py.lanes[i]*mainset.xres + mainset.px.lanes[i];
       img[pxind] = mainset.iters.lanes[i];
-//      printf("%d\n", mainset.iters.lanes[i]);
       mainset.iters.lanes[i] = LANE_EMPTY;
       if (pxind >= (mainset.numpixels - 8)) {
         mainset.iters.lanes[i] = LANE_FINISHED;
         sentinel++;
-        printf("%d\n", sentinel);
       }
     }
   }
@@ -83,7 +82,6 @@ void fillset(mainobj &mainset) {
       }
 
       mainset.iters.lanes[i] = 0;
-      //printf("%d\n", mainset.x);
       mainset.zreal.lanes[i] = 0;
       mainset.zimag.lanes[i] = 0;
       mainset.ztemp.lanes[i] = 0;
@@ -92,16 +90,6 @@ void fillset(mainobj &mainset) {
       mainset.creal.lanes[i] = (mainset.px.lanes[i]*mainset.recdiv + mainset.cx0);
       mainset.cimag.lanes[i] = (mainset.py.lanes[i]*mainset.imcdiv + mainset.cy0);
     }
-
-#if 0
-    if (mainset.iters.lanes[i] == LANE_FINISHED) {
-      //filler
-    }
-    //for (int j = 0; j < 8; j++) {
-    //  printf("%.2f ", mainset.iters.lanes[i]);
-    //}
-    //printf("\n");
-#endif
   }
 }
 
@@ -109,17 +97,16 @@ void fillset(mainobj &mainset) {
 void calcloop(mainobj &mainset) {
   __m256 one = _mm256_set1_ps(1.0);
   mainset.ztemp.vec = mainset.zreal.vec;                                   //zreal = ((zreal * zreal) - (zimag * zimag));
-  mainset.zreal.vec = _mm256_sub_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec), _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec)); //zimag = (ztemp * zimag);
+  mainset.zreal.vec = _mm256_sub_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec), _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec));                                                  //zimag = (ztemp * zimag);
   mainset.zimag.vec = _mm256_mul_ps(mainset.ztemp.vec, mainset.zimag.vec); //zimag += zimag;
   mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.zimag.vec); //adding c
   mainset.zreal.vec = _mm256_add_ps(mainset.zreal.vec, mainset.creal.vec); //zreal += creal;
   mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.cimag.vec); //zimag += cimag;
-  mainset.iters.vec = _mm256_add_ps(mainset.iters.vec, one); // increment iteration count
+  mainset.iters.vec = _mm256_add_ps(mainset.iters.vec, one);               // increment iteration count
 }
 
 
 void initloop(int maxiter, int *img, int xres, int yres) {
-  //The init here needs to be cleaned and more readable
   printf("Im an init and i go here");
 
   mainobj mainset;
@@ -170,7 +157,6 @@ void pgm(int maxiter, int *img, int xres, int yres) {
     }
     fprintf(ofp, "%d ", img[i]);
   }
-  //printf("size of img is %d \n", sizeof(img)/sizeof(int));
 }
 
 int main() {
