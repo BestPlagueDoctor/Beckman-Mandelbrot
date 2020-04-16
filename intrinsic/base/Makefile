@@ -1,4 +1,6 @@
-calcgcc: 
-	gcc -o calc -Ofast objcalc_simd.cpp -march=native
+calcgcc:
+	gcc -o calc -Ofast objcalc_simd.cpp -march=native 
+debug:
+	gcc -o calc -g objcalc_simd.cpp -march=native -fsanitize=address -fsanitize=undefined -lasan -lubsan -pg
 clean:
 	rm calc

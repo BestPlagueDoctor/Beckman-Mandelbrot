@@ -3,6 +3,7 @@
 #include <cmath>
 #include <stdio.h>
 #include <immintrin.h>
+#include <cstdint>
 
 #define CHECK_ERR { if (notborked) ldjflksjdflkjdsflkj; }
 #define LANE_SIZE      8
@@ -33,16 +34,16 @@ struct mainobj {
   set px; // pixel associated with this lane
   set py; // pixel associated with this lane
 
-  int maxiter;
+  uint32_t maxiter;
 
   // x and y represent current progress through the img,
   // the next pixel to be processed in the "work queue"...
-  int x;
-  int y;
+  uint32_t x;
+  uint32_t y;
 
-  int xres;
-  int yres;
-  int numpixels;
+  uint32_t xres;
+  uint32_t yres;
+  uint32_t numpixels;
   float imcdiv;
   float recdiv;
 
@@ -57,16 +58,16 @@ struct mainobj {
 
 void cleanup(mainobj &mainset, int *img, int &sentinel) {
   //This routine needs to clean finshed lanes and store the iteration count before flagging said lanes as finished.
+  //Vector comparison tbh see -> for inspo: comp.vec = (_mm256_cmp_ps(_mm256_add_ps(_mm256_mul_ps(zreal, zreal), _mm256_mul_ps(zimag, zimag)), fourcomp, 2));
   for (int i=0; i<LANE_SIZE; i++) {
     float zmag2 = mainset.zreal.lanes[i]*mainset.zreal.lanes[i] + mainset.zimag.lanes[i]*mainset.zimag.lanes[i];
     if (mainset.iters.lanes[i] >= mainset.maxiter || zmag2 > 4.0) {
-      int pxind = mainset.py.lanes[i]*mainset.xres + mainset.px.lanes[i];
+      uint32_t pxind = mainset.py.lanes[i]*mainset.xres + mainset.px.lanes[i];
       img[pxind] = mainset.iters.lanes[i];
       mainset.iters.lanes[i] = LANE_EMPTY;
       if (pxind >= (mainset.numpixels - 8)) {
         mainset.iters.lanes[i] = LANE_FINISHED;
-        sentinel++;
-      }
+        sentinel++;}
     }
   }
 }
@@ -107,14 +108,10 @@ void calcloop(mainobj &mainset) {
 
 
 void initloop(int maxiter, int *img, int xres, int yres) {
-  printf("Im an init and i go here");
-
   mainobj mainset;
 
   mainset.iters.vec = _mm256_set1_ps(-1.0);
- 
   mainset.maxiter = maxiter;
-
   mainset.x = 0;
   mainset.y = 0;
   mainset.xres = xres;
