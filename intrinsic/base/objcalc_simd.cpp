@@ -8,8 +8,8 @@
 #define CHECK_ERR { if (notborked) ldjflksjdflkjdsflkj; }
 #define LANE_SIZE      8
 #define COUNTERINIT    0
-#define LANE_EMPTY    -1.0
-#define LANE_FINISHED -2.0
+#define LANE_EMPTY    -1
+#define LANE_FINISHED -2
 #define X_SCALE      2.0
 #define Y_SCALE      1.2
 #define X_AXIS       3.0
@@ -20,9 +20,14 @@ union set {
   float lanes[LANE_SIZE];
 };
 
+union intset {
+  __m256i vec;
+  int32_t lanes[LANE_SIZE];
+};
+
 struct mainobj {
   // iters is the number of iterations the vector has undergone
-  set iters;
+  intset iters;
 
   // creal-ztemp are the operands of the set
   set creal;
@@ -31,8 +36,8 @@ struct mainobj {
   set zimag;
   set ztemp;
 
-  set px; // pixel associated with this lane
-  set py; // pixel associated with this lane
+  intset px; // pixel associated with this lane
+  intset py; // pixel associated with this lane
 
   uint32_t maxiter;
 
@@ -56,12 +61,13 @@ struct mainobj {
 };
 
 
-void cleanup(mainobj &mainset, int *img, int &sentinel) {
+void cleanup(mainobj &mainset, int *img, int &sentinel, __m256 &zmag2, __m256 &fourvec) {
   //This routine needs to clean finshed lanes and store the iteration count before flagging said lanes as finished.
   //Vector comparison tbh see -> for inspo: comp.vec = (_mm256_cmp_ps(_mm256_add_ps(_mm256_mul_ps(zreal, zreal), _mm256_mul_ps(zimag, zimag)), fourcomp, 2));
+  //zmag2 = (_mm256_cmp_ps(_mm256_add_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec), _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec)), fourvec, 2));
   for (int i=0; i<LANE_SIZE; i++) {
-    float zmag2 = mainset.zreal.lanes[i]*mainset.zreal.lanes[i] + mainset.zimag.lanes[i]*mainset.zimag.lanes[i];
-    if (mainset.iters.lanes[i] >= mainset.maxiter || zmag2 > 4.0) {
+    float zmag3 = mainset.zreal.lanes[i]*mainset.zreal.lanes[i] + mainset.zimag.lanes[i]*mainset.zimag.lanes[i];
+    if (mainset.iters.lanes[i] >= mainset.maxiter || zmag3 > 4.0) {
       uint32_t pxind = mainset.py.lanes[i]*mainset.xres + mainset.px.lanes[i];
       img[pxind] = mainset.iters.lanes[i];
       mainset.iters.lanes[i] = LANE_EMPTY;
@@ -96,27 +102,31 @@ void fillset(mainobj &mainset) {
 
 
 void calcloop(mainobj &mainset) {
-  __m256 one = _mm256_set1_ps(1.0);
+  __m256i one = _mm256_set1_epi32(1);
   mainset.ztemp.vec = mainset.zreal.vec;                                   //zreal = ((zreal * zreal) - (zimag * zimag));
   mainset.zreal.vec = _mm256_sub_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec), _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec));                                                  //zimag = (ztemp * zimag);
   mainset.zimag.vec = _mm256_mul_ps(mainset.ztemp.vec, mainset.zimag.vec); //zimag += zimag;
   mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.zimag.vec); //adding c
   mainset.zreal.vec = _mm256_add_ps(mainset.zreal.vec, mainset.creal.vec); //zreal += creal;
   mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.cimag.vec); //zimag += cimag;
-  mainset.iters.vec = _mm256_add_ps(mainset.iters.vec, one);               // increment iteration count
+  mainset.iters.vec = _mm256_add_epi32(mainset.iters.vec, one);               // increment iteration count
+  //printf("%d, %d, %d, %d, %d, %d, %d, %d \n", mainset.iters.vec[0], mainset.iters.vec[1], mainset.iters.vec[2], mainset.iters.vec[3], mainset.iters.vec[4], mainset.iters.vec[5], mainset.iters.vec[6], mainset.iters.vec[7]);
 }
 
 
 void initloop(int maxiter, int *img, int xres, int yres) {
   mainobj mainset;
 
-  mainset.iters.vec = _mm256_set1_ps(-1.0);
+  mainset.iters.vec = _mm256_set1_epi32(-1);
+  printf("%d, %d, %d, %d, %d, %d, %d, %d \n", mainset.iters.vec[0], mainset.iters.vec[1], mainset.iters.vec[2], mainset.iters.vec[3], mainset.iters.vec[4], mainset.iters.vec[5], mainset.iters.vec[6], mainset.iters.vec[7]);
   mainset.maxiter = maxiter;
   mainset.x = 0;
   mainset.y = 0;
   mainset.xres = xres;
   mainset.yres = yres;  
   mainset.numpixels = xres*yres;
+  mainset.px.vec = _mm256_set1_epi32(0);
+  mainset.py.vec = _mm256_set1_epi32(0);
 
   // initialize cartesian coordinate window
   mainset.cx0 = -2;
@@ -129,9 +139,14 @@ void initloop(int maxiter, int *img, int xres, int yres) {
   mainset.recdiv = mainset.cw/mainset.xres;
   mainset.imcdiv = mainset.ch/mainset.yres;
 
+  // initialize comparison vectors
+  __m256 zmag2 = _mm256_set1_ps(0.0);
+  __m256 fourvec = _mm256_set1_ps(4.0);
+
+
   int sentinel = 0;
   while (sentinel < 8) {
-    cleanup(mainset, img, sentinel);
+    cleanup(mainset, img, sentinel, zmag2, fourvec);
     fillset(mainset);
     calcloop(mainset);
   }
