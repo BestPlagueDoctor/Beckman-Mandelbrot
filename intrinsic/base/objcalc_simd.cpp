@@ -22,7 +22,7 @@ union set {
 
 union intset {
   __m256i vec;
-  int32_t lanes[LANE_SIZE];
+  int32_t lanes[8];
 };
 
 struct mainobj {
@@ -116,8 +116,7 @@ void calcloop(mainobj &mainset) {
 
 void initloop(int maxiter, int *img, int xres, int yres) {
   mainobj mainset;
-
-  mainset.iters.vec = _mm256_set1_epi32(-1);
+  mainset.iters.vec = _mm256_set1_epi32(1);
   printf("%d, %d, %d, %d, %d, %d, %d, %d \n", mainset.iters.vec[0], mainset.iters.vec[1], mainset.iters.vec[2], mainset.iters.vec[3], mainset.iters.vec[4], mainset.iters.vec[5], mainset.iters.vec[6], mainset.iters.vec[7]);
   mainset.maxiter = maxiter;
   mainset.x = 0;
