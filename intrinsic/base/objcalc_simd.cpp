@@ -72,7 +72,7 @@ void cleanup(mainobj &mainset, int *img, int &sentinel, __m256 &zmag2, __m256i &
   //zmag2 = (_mm256_cmp_ps(_mm256_add_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec), _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec)), fourvec, 2));
   for (int i=0; i<LANE_SIZE; i++) {
     float zmag3 = mainset.zreal.lanes[i]*mainset.zreal.lanes[i] + mainset.zimag.lanes[i]*mainset.zimag.lanes[i];
-    if (mainset.iters.lanes[i] >= mainset.maxiter || zmag3 > 4.0) {
+    if (mainset.iters.lanes[i] >= mainset.maxiter || zmag3 >= 4.0) {
       while (mainset.iters.lanes[i] < mainset.maxiter && zmag3 <= 4.0) {
         mainset.zreal.vec = mainset.savereal.vec;
         mainset.zimag.vec = mainset.saveimag.vec;
@@ -180,7 +180,7 @@ void initloop(int maxiter, int *img, int xres, int yres) {
 
 
 void pgm(int maxiter, int *img, int xres, int yres) {
-  const char filename[1024] = "mande.pgm";
+  const char filename[1024] = "smol.pgm";
   FILE *ofp;
   if ((ofp = fopen(filename, "w")) == NULL) {
     perror("FAILURE");
@@ -198,9 +198,9 @@ void pgm(int maxiter, int *img, int xres, int yres) {
 }
 
 int main() {
-  int *img = (int*) malloc(1024*768*sizeof(int));
-  initloop(4096, img, 1024, 768);
-  pgm(4096, img, 1024, 768);
+  int *img = (int*) malloc(1920*1080*sizeof(int));
+  initloop(4096, img, 1920, 1080);
+  pgm(4096, img, 1920, 1080);
   free(img);
 }
 
