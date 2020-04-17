@@ -22,7 +22,7 @@ union set {
 
 union intset {
   __m256i vec;
-  int32_t lanes[8];
+  int32_t lanes[LANE_SIZE];
 };
 
 struct mainobj {
@@ -110,14 +110,13 @@ void calcloop(mainobj &mainset) {
   mainset.zreal.vec = _mm256_add_ps(mainset.zreal.vec, mainset.creal.vec); //zreal += creal;
   mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.cimag.vec); //zimag += cimag;
   mainset.iters.vec = _mm256_add_epi32(mainset.iters.vec, one);               // increment iteration count
-  //printf("%d, %d, %d, %d, %d, %d, %d, %d \n", mainset.iters.vec[0], mainset.iters.vec[1], mainset.iters.vec[2], mainset.iters.vec[3], mainset.iters.vec[4], mainset.iters.vec[5], mainset.iters.vec[6], mainset.iters.vec[7]);
+  //printf("%d, %d, %d, %d, %d, %d, %d, %d \n", mainset.iters.lanes[0], mainset.iters.lanes[1], mainset.iters.lanes[2], mainset.iters.lanes[3], mainset.iters.lanes[4], mainset.iters.lanes[5], mainset.iters.lanes[6], mainset.iters.lanes[7]);
 }
 
 
 void initloop(int maxiter, int *img, int xres, int yres) {
   mainobj mainset;
-  mainset.iters.vec = _mm256_set1_epi32(1);
-  printf("%d, %d, %d, %d, %d, %d, %d, %d \n", mainset.iters.vec[0], mainset.iters.vec[1], mainset.iters.vec[2], mainset.iters.vec[3], mainset.iters.vec[4], mainset.iters.vec[5], mainset.iters.vec[6], mainset.iters.vec[7]);
+  mainset.iters.vec = _mm256_set1_epi32(-1);
   mainset.maxiter = maxiter;
   mainset.x = 0;
   mainset.y = 0;
