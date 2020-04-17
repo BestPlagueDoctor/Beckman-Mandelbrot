@@ -13,7 +13,8 @@
 #define X_SCALE      2.0
 #define Y_SCALE      1.2
 #define X_AXIS       3.0
-#define Y_AXIS       2.4 
+#define Y_AXIS       2.4
+
 
 union set {
   __m256 vec;
@@ -35,6 +36,9 @@ struct mainobj {
   set zreal;
   set zimag;
   set ztemp;
+  //sets for the purpose of manual unrolling
+  set savereal;
+  set saveimag;
 
   intset px; // pixel associated with this lane
   intset py; // pixel associated with this lane
@@ -59,21 +63,29 @@ struct mainobj {
   float cw;
   float ch;
 };
+void calcloop(mainobj &mainset, __m256i &one);
 
 
-void cleanup(mainobj &mainset, int *img, int &sentinel, __m256 &zmag2, __m256 &fourvec) {
+void cleanup(mainobj &mainset, int *img, int &sentinel, __m256 &zmag2, __m256i &fourvec, __m256i &one) {
   //This routine needs to clean finshed lanes and store the iteration count before flagging said lanes as finished.
   //Vector comparison tbh see -> for inspo: comp.vec = (_mm256_cmp_ps(_mm256_add_ps(_mm256_mul_ps(zreal, zreal), _mm256_mul_ps(zimag, zimag)), fourcomp, 2));
   //zmag2 = (_mm256_cmp_ps(_mm256_add_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec), _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec)), fourvec, 2));
   for (int i=0; i<LANE_SIZE; i++) {
     float zmag3 = mainset.zreal.lanes[i]*mainset.zreal.lanes[i] + mainset.zimag.lanes[i]*mainset.zimag.lanes[i];
     if (mainset.iters.lanes[i] >= mainset.maxiter || zmag3 > 4.0) {
+      while (mainset.iters.lanes[i] < mainset.maxiter && zmag3 <= 4.0) {
+        mainset.zreal.vec = mainset.savereal.vec;
+        mainset.zimag.vec = mainset.saveimag.vec;
+        calcloop(mainset, one);
+        zmag3 = mainset.zreal.lanes[i]*mainset.zreal.lanes[i] + mainset.zimag.lanes[i]*mainset.zimag.lanes[i];
+      }
       uint32_t pxind = mainset.py.lanes[i]*mainset.xres + mainset.px.lanes[i];
       img[pxind] = mainset.iters.lanes[i];
       mainset.iters.lanes[i] = LANE_EMPTY;
       if (pxind >= (mainset.numpixels - 8)) {
         mainset.iters.lanes[i] = LANE_FINISHED;
-        sentinel++;}
+        sentinel++;
+      }
     }
   }
 }
@@ -100,9 +112,23 @@ void fillset(mainobj &mainset) {
   }
 }
 
+void newcalcloop (mainobj &mainset, __m256i &eight) {
+  mainset.savereal.vec = mainset.zreal.vec;
+  mainset.saveimag.vec = mainset.zimag.vec;
+  for (int l=0;l<8;l++) {
+    mainset.ztemp.vec = mainset.zreal.vec;                                   //zreal = ((zreal * zreal) - (zimag * zimag));
+    mainset.zreal.vec = _mm256_sub_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec), _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec));                                                  //zimag = (ztemp * zimag);
+    mainset.zimag.vec = _mm256_mul_ps(mainset.ztemp.vec, mainset.zimag.vec); //zimag += zimag;
+    mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.zimag.vec); //adding c
+    mainset.zreal.vec = _mm256_add_ps(mainset.zreal.vec, mainset.creal.vec); //zreal += creal;
+    mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.cimag.vec); //zimag += cimag;
+    mainset.iters.vec = _mm256_add_epi32(mainset.iters.vec, eight);               // increment iteration count
+    //printf("%d, %d, %d, %d, %d, %d, %d, %d \n", mainset.iters.lanes[0], mainset.iters.lanes[1], mainset.iters.lanes[2], mainset.iters.lanes[3], mainset.iters.lanes[4], mainset.iters.lanes[5], mainset.iters.lanes[6], mainset.iters.lanes[7]);
+  }
+}
 
-void calcloop(mainobj &mainset) {
-  __m256i one = _mm256_set1_epi32(1);
+//finna unroll
+void calcloop(mainobj &mainset, __m256i &one) {
   mainset.ztemp.vec = mainset.zreal.vec;                                   //zreal = ((zreal * zreal) - (zimag * zimag));
   mainset.zreal.vec = _mm256_sub_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec), _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec));                                                  //zimag = (ztemp * zimag);
   mainset.zimag.vec = _mm256_mul_ps(mainset.ztemp.vec, mainset.zimag.vec); //zimag += zimag;
@@ -139,14 +165,16 @@ void initloop(int maxiter, int *img, int xres, int yres) {
 
   // initialize comparison vectors
   __m256 zmag2 = _mm256_set1_ps(0.0);
-  __m256 fourvec = _mm256_set1_ps(4.0);
+  __m256i one = _mm256_set1_epi32(1);
+  __m256i fourvec = _mm256_set1_epi32(4);
+  __m256i eight = _mm256_set1_epi32(8);
 
 
   int sentinel = 0;
   while (sentinel < 8) {
-    cleanup(mainset, img, sentinel, zmag2, fourvec);
+    cleanup(mainset, img, sentinel, zmag2, fourvec, one);
     fillset(mainset);
-    calcloop(mainset);
+    newcalcloop(mainset, eight);
   }
 }
 
