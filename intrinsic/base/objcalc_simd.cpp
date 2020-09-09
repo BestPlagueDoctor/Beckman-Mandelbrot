@@ -66,14 +66,16 @@ struct mainobj {
 void calcloop(mainobj &mainset, __m256i &one);
 
 
-void cleanup(mainobj &mainset, int *img, int &sentinel, __m256 &zmag2, __m256i &fourvec, __m256i &one) {
+void cleanup(mainobj &mainset, int *img, int &sentinel, __m256 &zmag2, __m256i &fourvec, __m256i &one, __m256i &eight) {
   //This routine needs to clean finshed lanes and store the iteration count before flagging said lanes as finished.
   //Vector comparison tbh see -> for inspo: comp.vec = (_mm256_cmp_ps(_mm256_add_ps(_mm256_mul_ps(zreal, zreal), _mm256_mul_ps(zimag, zimag)), fourcomp, 2));
   //zmag2 = (_mm256_cmp_ps(_mm256_add_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec), _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec)), fourvec, 2));
   for (int i=0; i<LANE_SIZE; i++) {
     float zmag3 = mainset.zreal.lanes[i]*mainset.zreal.lanes[i] + mainset.zimag.lanes[i]*mainset.zimag.lanes[i];
     if (mainset.iters.lanes[i] >= mainset.maxiter || zmag3 >= 4.0) {
-      while (mainset.iters.lanes[i] < mainset.maxiter && zmag3 <= 4.0) {
+      //mainset.iters.vec = _mm256_sub_epi32(mainset.iters.vec, eight);
+      while (mainset.iters.lanes[i] < mainset.maxiter && zmag3 < 4.0) {
+        //printf("I'm inside a while!");
         mainset.zreal.vec = mainset.savereal.vec;
         mainset.zimag.vec = mainset.saveimag.vec;
         calcloop(mainset, one);
@@ -92,6 +94,7 @@ void cleanup(mainobj &mainset, int *img, int &sentinel, __m256 &zmag2, __m256i &
 
 
 void fillset(mainobj &mainset) {
+  //This routine stages all lanes, filling pixels, XY coords, and scales C numbers before operation.
   for (int i=0; i<LANE_SIZE; i++) {
     if (mainset.iters.lanes[i] == LANE_EMPTY) {
       mainset.x++;
@@ -116,15 +119,14 @@ void newcalcloop (mainobj &mainset, __m256i &eight) {
   mainset.savereal.vec = mainset.zreal.vec;
   mainset.saveimag.vec = mainset.zimag.vec;
   for (int l=0;l<8;l++) {
-    mainset.ztemp.vec = mainset.zreal.vec;                                   //zreal = ((zreal * zreal) - (zimag * zimag));
+    mainset.ztemp.vec =  mainset.zreal.vec;                                   //zreal = ((zreal * zreal) - (zimag * zimag));
     mainset.zreal.vec = _mm256_sub_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec), _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec));                                                  //zimag = (ztemp * zimag);
     mainset.zimag.vec = _mm256_mul_ps(mainset.ztemp.vec, mainset.zimag.vec); //zimag += zimag;
     mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.zimag.vec); //adding c
     mainset.zreal.vec = _mm256_add_ps(mainset.zreal.vec, mainset.creal.vec); //zreal += creal;
     mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.cimag.vec); //zimag += cimag;
-    mainset.iters.vec = _mm256_add_epi32(mainset.iters.vec, eight);               // increment iteration count
-    //printf("%d, %d, %d, %d, %d, %d, %d, %d \n", mainset.iters.lanes[0], mainset.iters.lanes[1], mainset.iters.lanes[2], mainset.iters.lanes[3], mainset.iters.lanes[4], mainset.iters.lanes[5], mainset.iters.lanes[6], mainset.iters.lanes[7]);
   }
+  mainset.iters.vec = _mm256_add_epi32(mainset.iters.vec, eight);               // increment iteration count
 }
 
 //finna unroll
@@ -136,13 +138,14 @@ void calcloop(mainobj &mainset, __m256i &one) {
   mainset.zreal.vec = _mm256_add_ps(mainset.zreal.vec, mainset.creal.vec); //zreal += creal;
   mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.cimag.vec); //zimag += cimag;
   mainset.iters.vec = _mm256_add_epi32(mainset.iters.vec, one);               // increment iteration count
+  //printf("Im doing cleanup");
   //printf("%d, %d, %d, %d, %d, %d, %d, %d \n", mainset.iters.lanes[0], mainset.iters.lanes[1], mainset.iters.lanes[2], mainset.iters.lanes[3], mainset.iters.lanes[4], mainset.iters.lanes[5], mainset.iters.lanes[6], mainset.iters.lanes[7]);
 }
 
 
 void initloop(int maxiter, int *img, int xres, int yres) {
   mainobj mainset;
-  mainset.iters.vec = _mm256_set1_epi32(-1);
+  mainset.iters.vec = _mm256_set1_epi32(LANE_EMPTY);
   mainset.maxiter = maxiter;
   mainset.x = 0;
   mainset.y = 0;
@@ -172,7 +175,7 @@ void initloop(int maxiter, int *img, int xres, int yres) {
 
   int sentinel = 0;
   while (sentinel < 8) {
-    cleanup(mainset, img, sentinel, zmag2, fourvec, one);
+    cleanup(mainset, img, sentinel, zmag2, fourvec, one, eight);
     fillset(mainset);
     newcalcloop(mainset, eight);
   }
