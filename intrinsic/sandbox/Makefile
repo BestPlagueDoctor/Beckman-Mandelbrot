@@ -1,4 +1,4 @@
 intrinsic: 
-	gcc -o intrin -Ofast intrinsic.cpp -march=native
+	gcc -g -o  bitwise -Ofast bitwise.cpp -march=native
 clean:
-	rm intrin
+	rm bitwise

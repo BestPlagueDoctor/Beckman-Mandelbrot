@@ -66,6 +66,8 @@ struct mainobj {
 void calcloop(mainobj &mainset, __m256i &one);
 
 
+//Grand refactor: use bitwise ops to increment iters, zreal/zimag.
+
 void cleanup(mainobj &mainset, int *img, int &sentinel, __m256 &zmag2, __m256i &fourvec, __m256i &one, __m256i &eight) {
   //This routine needs to clean finshed lanes and store the iteration count before flagging said lanes as finished.
   //Vector comparison tbh see -> for inspo: comp.vec = (_mm256_cmp_ps(_mm256_add_ps(_mm256_mul_ps(zreal, zreal), _mm256_mul_ps(zimag, zimag)), fourcomp, 2));
@@ -115,6 +117,7 @@ void fillset(mainobj &mainset) {
   }
 }
 
+//finna unroll
 void newcalcloop (mainobj &mainset, __m256i &eight) {
   mainset.savereal.vec = mainset.zreal.vec;
   mainset.saveimag.vec = mainset.zimag.vec;
@@ -129,7 +132,6 @@ void newcalcloop (mainobj &mainset, __m256i &eight) {
   mainset.iters.vec = _mm256_add_epi32(mainset.iters.vec, eight);               // increment iteration count
 }
 
-//finna unroll
 void calcloop(mainobj &mainset, __m256i &one) {
   mainset.ztemp.vec = mainset.zreal.vec;                                   //zreal = ((zreal * zreal) - (zimag * zimag));
   mainset.zreal.vec = _mm256_sub_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec), _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec));                                                  //zimag = (ztemp * zimag);
