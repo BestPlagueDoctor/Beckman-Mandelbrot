@@ -50,6 +50,8 @@ struct mainobj {
   //sets for the purpose of manual unrolling
   set savereal;
   set saveimag;
+  set savezrsq;
+  set savezisq;
 
   intset px; // pixel associated with this lane
   intset py; // pixel associated with this lane
@@ -87,11 +89,42 @@ void calcloop(mainobj &mainset) {
   mainset.zrsq.vec =  _mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec);
   mainset.zisq.vec =  _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec);
   mainset.savereal.vec = mainset.zreal.vec; mainset.saveimag.vec = mainset.zimag.vec;
+  mainset.savezrsq.vec = mainset.zrsq.vec; mainset.savezisq.vec = mainset.zisq.vec;
+  mainset.zimag.vec = _mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(mainset.zreal.vec, mainset.zreal.vec), mainset.zimag.vec), mainset.creal.vec);
+  mainset.zreal.vec = _mm256_add_ps(_mm256_sub_ps(mainset.zrsq.vec, mainset.zisq.vec), mainset.creal.vec);
+  mainset.zrsq.vec =  _mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec);
+  mainset.zisq.vec =  _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec);
+  mainset.zimag.vec = _mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(mainset.zreal.vec, mainset.zreal.vec), mainset.zimag.vec), mainset.creal.vec);
+  mainset.zreal.vec = _mm256_add_ps(_mm256_sub_ps(mainset.zrsq.vec, mainset.zisq.vec), mainset.creal.vec);
+  mainset.zrsq.vec =  _mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec);
+  mainset.zisq.vec =  _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec);
+  mainset.zimag.vec = _mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(mainset.zreal.vec, mainset.zreal.vec), mainset.zimag.vec), mainset.creal.vec);
+  mainset.zreal.vec = _mm256_add_ps(_mm256_sub_ps(mainset.zrsq.vec, mainset.zisq.vec), mainset.creal.vec);
+  mainset.zrsq.vec =  _mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec);
+  mainset.zisq.vec =  _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec);
+  mainset.zimag.vec = _mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(mainset.zreal.vec, mainset.zreal.vec), mainset.zimag.vec), mainset.creal.vec);
+  mainset.zreal.vec = _mm256_add_ps(_mm256_sub_ps(mainset.zrsq.vec, mainset.zisq.vec), mainset.creal.vec);
+  mainset.zrsq.vec =  _mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec);
+  mainset.zisq.vec =  _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec);
+  mainset.zimag.vec = _mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(mainset.zreal.vec, mainset.zreal.vec), mainset.zimag.vec), mainset.creal.vec);
+  mainset.zreal.vec = _mm256_add_ps(_mm256_sub_ps(mainset.zrsq.vec, mainset.zisq.vec), mainset.creal.vec);
+  mainset.zrsq.vec =  _mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec);
+  mainset.zisq.vec =  _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec);
+  mainset.zimag.vec = _mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(mainset.zreal.vec, mainset.zreal.vec), mainset.zimag.vec), mainset.creal.vec);
+  mainset.zreal.vec = _mm256_add_ps(_mm256_sub_ps(mainset.zrsq.vec, mainset.zisq.vec), mainset.creal.vec);
+  mainset.zrsq.vec =  _mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec);
+  mainset.zisq.vec =  _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec);
+  mainset.zimag.vec = _mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(mainset.zreal.vec, mainset.zreal.vec), mainset.zimag.vec), mainset.creal.vec);
+  mainset.zreal.vec = _mm256_add_ps(_mm256_sub_ps(mainset.zrsq.vec, mainset.zisq.vec), mainset.creal.vec);
+  mainset.zrsq.vec =  _mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec);
+  mainset.zisq.vec =  _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec);
 }
 
 
 void cleanup(mainobj &mainset, int *img, int &sentinel, __m256i &four, __m256i &one, __m256i &eight) {
   mainset.zmag2.vec = _mm256_add_ps(mainset.zrsq.vec, mainset.zisq.vec);
+  printf("Zrsq: %f, %f, %f, %f, %f, %f, %f, %f \n", mainset.zrsq.lanes[0], mainset.zrsq.lanes[1], mainset.zrsq.lanes[2], mainset.zrsq.lanes[3], mainset.zrsq.lanes[4], mainset.zrsq.lanes[5], mainset.zrsq.lanes[6], mainset.zrsq.lanes[7]);
+  printf("Zisq: %f, %f, %f, %f, %f, %f, %f, %f \n", mainset.zisq.lanes[0], mainset.zisq.lanes[1], mainset.zisq.lanes[2], mainset.zisq.lanes[3], mainset.zisq.lanes[4], mainset.zisq.lanes[5], mainset.zisq.lanes[6], mainset.zisq.lanes[7]);
   printf("Zmag2: %f, %f, %f, %f, %f, %f, %f, %f \n", mainset.zmag2.lanes[0], mainset.zmag2.lanes[1], mainset.zmag2.lanes[2], mainset.zmag2.lanes[3], mainset.zmag2.lanes[4], mainset.zmag2.lanes[5], mainset.zmag2.lanes[6], mainset.zmag2.lanes[7]);
   for (int i=0; i<8; i++) {
     //do this as a vector comp?
@@ -101,10 +134,16 @@ void cleanup(mainobj &mainset, int *img, int &sentinel, __m256i &four, __m256i &
     }
   }
 
+
+
+  printf("Savezrsq: %f, %f, %f, %f, %f, %f, %f, %f \n", mainset.savezrsq.lanes[0], mainset.savezrsq.lanes[1], mainset.savezrsq.lanes[2], mainset.savezrsq.lanes[3], mainset.savezrsq.lanes[4], mainset.savezrsq.lanes[5], mainset.savezrsq.lanes[6], mainset.savezrsq.lanes[7]);
   mainset.iters.vec += _mm256_or_si256(_mm256_and_si256(mainset.lanespeed.vec, one), _mm256_andnot_si256(mainset.lanespeed.vec, eight));
-  printf("Iters: %d, %d, %d, %d, %d, %d, %d, %d \n", mainset.iters.lanes[0], mainset.iters.lanes[1], mainset.iters.lanes[2], mainset.iters.lanes[3], mainset.iters.lanes[4], mainset.iters.lanes[5], mainset.iters.lanes[6], mainset.iters.lanes[7]);
+  //printf("Lanespeed: %d, %d, %d, %d, %d, %d, %d, %d \n", mainset.lanespeed.lanes[0], mainset.lanespeed.lanes[1], mainset.lanespeed.lanes[2], mainset.lanespeed.lanes[3], mainset.lanespeed.lanes[4], mainset.lanespeed.lanes[5], mainset.lanespeed.lanes[6], mainset.lanespeed.lanes[7]);
+  //printf("Iters: %d, %d, %d, %d, %d, %d, %d, %d \n", mainset.iters.lanes[0], mainset.iters.lanes[1], mainset.iters.lanes[2], mainset.iters.lanes[3], mainset.iters.lanes[4], mainset.iters.lanes[5], mainset.iters.lanes[6], mainset.iters.lanes[7]);
   mainset.zreal.vec =  _mm256_or_ps(_mm256_and_ps(_mm256_castsi256_ps(mainset.lanespeed.vec), mainset.savereal.vec), _mm256_andnot_ps(_mm256_castsi256_ps(mainset.lanespeed.vec), mainset.zreal.vec));
   mainset.zimag.vec =  _mm256_or_ps(_mm256_and_ps(_mm256_castsi256_ps(mainset.lanespeed.vec), mainset.saveimag.vec), _mm256_andnot_ps(_mm256_castsi256_ps(mainset.lanespeed.vec), mainset.zimag.vec));
+  mainset.zrsq.vec =  _mm256_or_ps(_mm256_and_ps(_mm256_castsi256_ps(mainset.lanespeed.vec), mainset.savezrsq.vec), _mm256_andnot_ps(_mm256_castsi256_ps(mainset.lanespeed.vec), mainset.zrsq.vec));
+  mainset.zisq.vec =  _mm256_or_ps(_mm256_and_ps(_mm256_castsi256_ps(mainset.lanespeed.vec), mainset.savezisq.vec), _mm256_andnot_ps(_mm256_castsi256_ps(mainset.lanespeed.vec), mainset.zisq.vec));
 
   for (int i=0; i<8; i++) {
     if (mainset.iters.lanes[i] == mainset.maxiter) {

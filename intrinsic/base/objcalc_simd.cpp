@@ -113,6 +113,7 @@ void fillset(mainobj &mainset) {
       mainset.py.lanes[i] = mainset.y;
       mainset.creal.lanes[i] = (mainset.px.lanes[i]*mainset.recdiv + mainset.cx0);
       mainset.cimag.lanes[i] = (mainset.py.lanes[i]*mainset.imcdiv + mainset.cy0);
+      //printf("%f", mainset.cimag.lanes[i]);
     }
   }
 }
