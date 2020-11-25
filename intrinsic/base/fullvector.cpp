@@ -1,5 +1,4 @@
 //Hard scrap, new plan is to fully vectorize
-
 #include "proto.h"
 #include <cmath>
 #include <stdio.h>
@@ -16,11 +15,13 @@
 #define Y_AXIS       2.4
 
 
+//Union set is a vector of 32bit floats
 union set {
   __m256 vec;
   float lanes[LANE_SIZE];
 };
 
+//Union intset is a vector is signed 32bit ints, for when numbers had better be whole
 union intset {
   __m256i vec;
   int32_t lanes[LANE_SIZE];
@@ -31,7 +32,6 @@ struct mainobj {
   intset iters;
 
   // lanespeed is a flag to mark bailed lanes
-  intset lanespeed;
   intset magcmp;
 
   // creal-ztemp are the operands of the set
@@ -74,87 +74,52 @@ struct mainobj {
   float ch;
 };
 
-void calcloop(mainobj &mainset) {
+void calcloop(mainobj &mainset, __m256i &eight) {
   mainset.savereal.vec = mainset.zreal.vec;
   mainset.saveimag.vec = mainset.zimag.vec;
-  mainset.ztemp.vec = mainset.zreal.vec;
-  mainset.zreal.vec = _mm256_sub_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec), _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec));
-  mainset.zimag.vec = _mm256_mul_ps(mainset.ztemp.vec, mainset.zimag.vec);
-  mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.zimag.vec);
-  mainset.zreal.vec = _mm256_add_ps(mainset.zreal.vec, mainset.creal.vec);
-  mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.cimag.vec);
-  mainset.ztemp.vec = mainset.zreal.vec;
-  mainset.zreal.vec = _mm256_sub_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec), _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec));
-  mainset.zimag.vec = _mm256_mul_ps(mainset.ztemp.vec, mainset.zimag.vec);
-  mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.zimag.vec);
-  mainset.zreal.vec = _mm256_add_ps(mainset.zreal.vec, mainset.creal.vec);
-  mainset.ztemp.vec = mainset.zreal.vec;
-  mainset.zreal.vec = _mm256_sub_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec), _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec));
-  mainset.zimag.vec = _mm256_mul_ps(mainset.ztemp.vec, mainset.zimag.vec);
-  mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.zimag.vec);
-  mainset.zreal.vec = _mm256_add_ps(mainset.zreal.vec, mainset.creal.vec);
-  mainset.ztemp.vec = mainset.zreal.vec;
-  mainset.zreal.vec = _mm256_sub_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec), _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec));
-  mainset.zimag.vec = _mm256_mul_ps(mainset.ztemp.vec, mainset.zimag.vec);
-  mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.zimag.vec);
-  mainset.zreal.vec = _mm256_add_ps(mainset.zreal.vec, mainset.creal.vec);
-  mainset.ztemp.vec = mainset.zreal.vec;
-  mainset.zreal.vec = _mm256_sub_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec), _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec));
-  mainset.zimag.vec = _mm256_mul_ps(mainset.ztemp.vec, mainset.zimag.vec);
-  mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.zimag.vec);
-  mainset.zreal.vec = _mm256_add_ps(mainset.zreal.vec, mainset.creal.vec);
-  mainset.ztemp.vec = mainset.zreal.vec;
-  mainset.zreal.vec = _mm256_sub_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec), _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec));
-  mainset.zimag.vec = _mm256_mul_ps(mainset.ztemp.vec, mainset.zimag.vec);
-  mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.zimag.vec);
-  mainset.zreal.vec = _mm256_add_ps(mainset.zreal.vec, mainset.creal.vec);
-  mainset.ztemp.vec = mainset.zreal.vec;
-  mainset.zreal.vec = _mm256_sub_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec), _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec));
-  mainset.zimag.vec = _mm256_mul_ps(mainset.ztemp.vec, mainset.zimag.vec);
-  mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.zimag.vec);
-  mainset.zreal.vec = _mm256_add_ps(mainset.zreal.vec, mainset.creal.vec);
-  mainset.ztemp.vec = mainset.zreal.vec;
-  mainset.zreal.vec = _mm256_sub_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec), _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec));
-  mainset.zimag.vec = _mm256_mul_ps(mainset.ztemp.vec, mainset.zimag.vec);
-  mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.zimag.vec);
-  mainset.zreal.vec = _mm256_add_ps(mainset.zreal.vec, mainset.creal.vec);
-  mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.cimag.vec);
+  mainset.zimag.vec = _mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(mainset.zreal.vec, mainset.zreal.vec), mainset.zimag.vec), mainset.creal.vec);
+  mainset.zreal.vec = _mm256_add_ps(_mm256_sub_ps(mainset.zrsq.vec, mainset.zisq.vec), mainset.creal.vec);
+  mainset.zrsq.vec =  _mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec);
+  mainset.zisq.vec =  _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec);
+  mainset.zimag.vec = _mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(mainset.zreal.vec, mainset.zreal.vec), mainset.zimag.vec), mainset.creal.vec);
+  mainset.zreal.vec = _mm256_add_ps(_mm256_sub_ps(mainset.zrsq.vec, mainset.zisq.vec), mainset.creal.vec);
+  mainset.zrsq.vec =  _mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec);
+  mainset.zisq.vec =  _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec);
+  mainset.zimag.vec = _mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(mainset.zreal.vec, mainset.zreal.vec), mainset.zimag.vec), mainset.creal.vec);
+  mainset.zreal.vec = _mm256_add_ps(_mm256_sub_ps(mainset.zrsq.vec, mainset.zisq.vec), mainset.creal.vec);
+  mainset.zrsq.vec =  _mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec);
+  mainset.zisq.vec =  _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec);
+  mainset.zimag.vec = _mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(mainset.zreal.vec, mainset.zreal.vec), mainset.zimag.vec), mainset.creal.vec);
+  mainset.zreal.vec = _mm256_add_ps(_mm256_sub_ps(mainset.zrsq.vec, mainset.zisq.vec), mainset.creal.vec);
+  mainset.zrsq.vec =  _mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec);
+  mainset.zisq.vec =  _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec);
+  mainset.zimag.vec = _mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(mainset.zreal.vec, mainset.zreal.vec), mainset.zimag.vec), mainset.creal.vec);
+  mainset.zreal.vec = _mm256_add_ps(_mm256_sub_ps(mainset.zrsq.vec, mainset.zisq.vec), mainset.creal.vec);
+  mainset.zrsq.vec =  _mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec);
+  mainset.zisq.vec =  _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec);
+  mainset.zimag.vec = _mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(mainset.zreal.vec, mainset.zreal.vec), mainset.zimag.vec), mainset.creal.vec);
+  mainset.zreal.vec = _mm256_add_ps(_mm256_sub_ps(mainset.zrsq.vec, mainset.zisq.vec), mainset.creal.vec);
+  mainset.zrsq.vec =  _mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec);
+  mainset.zisq.vec =  _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec);
+  mainset.zimag.vec = _mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(mainset.zreal.vec, mainset.zreal.vec), mainset.zimag.vec), mainset.creal.vec);
+  mainset.zreal.vec = _mm256_add_ps(_mm256_sub_ps(mainset.zrsq.vec, mainset.zisq.vec), mainset.creal.vec);
+  mainset.zrsq.vec =  _mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec);
+  mainset.zisq.vec =  _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec);
+  mainset.zimag.vec = _mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(mainset.zreal.vec, mainset.zreal.vec), mainset.zimag.vec), mainset.creal.vec);
+  mainset.zreal.vec = _mm256_add_ps(_mm256_sub_ps(mainset.zrsq.vec, mainset.zisq.vec), mainset.creal.vec);
+  mainset.zrsq.vec =  _mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec);
+  mainset.zisq.vec =  _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec);
+  mainset.iters.vec = _mm256_add_epi32(mainset.iters.vec, eight);
 }
 
 
 void cleanup(mainobj &mainset, int *img, int &sentinel, __m256 &four, __m256i &one, __m256i &eight, __m256i &zero) {
-  mainset.zmag2.vec = _mm256_add_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec), _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec));
-  //printf("Zmag2: %f, %f, %f, %f, %f, %f, %f, %f \n", mainset.zmag2.lanes[0], mainset.zmag2.lanes[1], mainset.zmag2.lanes[2], mainset.zmag2.lanes[3], mainset.zmag2.lanes[4], mainset.zmag2.lanes[5], mainset.zmag2.lanes[6], mainset.zmag2.lanes[7]);
-  mainset.magcmp.vec = _mm256_castps_si256(_mm256_cmp_ps(mainset.zmag2.vec, four, _CMP_NLE_UQ));
-  //printf("Magcmp: %d, %d, %d, %d, %d, %d, %d, %d \n", mainset.magcmp.lanes[0], mainset.magcmp.lanes[1], mainset.magcmp.lanes[2], mainset.magcmp.lanes[3], mainset.magcmp.lanes[4], mainset.magcmp.lanes[5], mainset.magcmp.lanes[6], mainset.magcmp.lanes[7]);
-  mainset.lanespeed.vec = mainset.magcmp.vec;
-  //mainset.iters.vec = _mm256_sub_epi32(mainset.iters.vec, _mm256_and_si256(mainset.lanespeed.vec, eight));
-  __m256i maxitervec = _mm256_set1_epi32(4096);
-  //Need to use a different check than <4096
-  mainset.isreset.vec = _mm256_add_epi32(mainset.isreset.vec, _mm256_and_si256(_mm256_and_si256(_mm256_cmpgt_epi32(mainset.iters.vec, maxitervec), mainset.lanespeed.vec), one));
-  mainset.iters.vec = _mm256_sub_epi32(mainset.iters.vec, _mm256_and_si256(_mm256_cmpeq_epi32(mainset.isreset.vec, one), eight));
-  mainset.iters.vec = _mm256_add_epi32(mainset.iters.vec, _mm256_or_si256(_mm256_and_si256(mainset.lanespeed.vec, one), _mm256_andnot_si256(mainset.lanespeed.vec, eight)));
-  mainset.zreal.vec = _mm256_or_ps(_mm256_and_ps(_mm256_castsi256_ps(mainset.lanespeed.vec), mainset.savereal.vec), _mm256_andnot_ps(_mm256_castsi256_ps(mainset.lanespeed.vec), mainset.zreal.vec));
-  mainset.zimag.vec = _mm256_or_ps(_mm256_and_ps(_mm256_castsi256_ps(mainset.lanespeed.vec), mainset.saveimag.vec), _mm256_andnot_ps(_mm256_castsi256_ps(mainset.lanespeed.vec), mainset.zimag.vec));
-  mainset.zmag2.vec = _mm256_add_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec), _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec));
-  //printf("Iters: %d, %d, %d, %d, %d, %d, %d, %d \n", mainset.iters.lanes[0], mainset.iters.lanes[1], mainset.iters.lanes[2], mainset.iters.lanes[3], mainset.iters.lanes[4], mainset.iters.lanes[5], mainset.iters.lanes[6], mainset.iters.lanes[7]);
-  mainset.magcmp.vec = _mm256_castps_si256(_mm256_cmp_ps(mainset.zmag2.vec, four, _CMP_NLE_UQ));
+  mainset.zmag2.vec = _mm256_add_ps(mainset.zrsq.vec, mainset.zisq.vec);
+  mainset.magcmp.vec = _mm256_cmp_ps(mainset.zmag2.vec, mainset.four.vec, _CMP_NLE_OQ); 
+  mainset.iters.vec = _mm256_add_epi32()
 
-  for (int i=0; i<8; i++) {
-    //replace this with a true magnitude check
-    if ((mainset.iters.lanes[i] >= mainset.maxiter || mainset.magcmp.lanes[i] == -1) && mainset.isreset.lanes[i] != 0) {
-      int pxind = mainset.py.lanes[i]*mainset.xres + mainset.px.lanes[i];
-      img[pxind] = mainset.iters.lanes[i];
-      //printf("%d\n", pxind);
-      mainset.iters.lanes[i] = LANE_EMPTY;
-      mainset.lanespeed.lanes[i] = 0;
-      mainset.isreset.lanes[i] = 0;
-      if (pxind >= (mainset.numpixels - 8)) {
-        mainset.iters.lanes[i] = LANE_FINISHED;
-        sentinel++;
-      }
-    }
-  }
+  
+  
 }
 
 void fillset(mainobj &mainset) {
