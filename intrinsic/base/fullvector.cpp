@@ -116,7 +116,10 @@ void calcloop(mainobj &mainset, __m256i &eight) {
 void cleanup(mainobj &mainset, int *img, int &sentinel, __m256 &four, __m256i &one, __m256i &eight, __m256i &zero) {
   mainset.zmag2.vec = _mm256_add_ps(mainset.zrsq.vec, mainset.zisq.vec);
   mainset.magcmp.vec = _mm256_cmp_ps(mainset.zmag2.vec, mainset.four.vec, _CMP_NLE_OQ); 
-  mainset.iters.vec = _mm256_add_epi32()
+  mainset.iters.vec = _mm256_add_epi32();
+  //The line above needs to check both maxiter and magcmp in one go, (OR'd together?) to see if rollback.
+  //Rolled back code can take place inside (a loop) but needs to single step the whole vector. Consider how
+  //to combine an independent magcmp with this control flow
 
   
   
