@@ -1,10 +1,23 @@
 #include <immintrin.h>
-#include <cstdio>
+#include <stdio.h>
+#include <string.h>
+
+union alley {
+  __m256 vec;
+  struct {
+    float lanes[8];
+  };
+};
 
 int main() {
-  __m256 test1 = {1, 2, 3, 4};
-  __m256 test2 = {1, 2, 3, 4};
-  __m256 test3 = _mm256_add_ps (test1, test2);
-  printf("%.2f %.2f %.2f %.2f", test3[0], test3[1], test3[2], test3[3]);
-  
+  alley arrowhead;
+  for(int i=0;i<8;i++){
+    arrowhead.lanes[i] = i*31.1;
+  }
+  for(int i=0;i<8;i++){
+    printf("%.2f   ", arrowhead.vec[i]);
+  for(int i = 0; i <= 8; i++) {
+
+  }
 }
+
