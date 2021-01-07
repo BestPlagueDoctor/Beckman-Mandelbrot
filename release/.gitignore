@@ -1,6 +1,0 @@
-# Ignoring binary sources and produced images #
-*.pgm
-*.ppm
-calc
-Makefile
-
