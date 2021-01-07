@@ -3,6 +3,8 @@
 #include <cmath>
 #include <cstdint>
 #include <immintrin.h>
+#include <memory>
+#include <new>
 #include <stdio.h>
 
 #define LANE_SIZE 8
@@ -80,8 +82,8 @@ void calcloop(mainobj& mainset) {
   // Calc loop, needs to be updated to new algo and unrolled
   mainset.ztemp.vec = mainset.zreal.vec; // zreal = ((zreal * zreal) - (zimag * zimag));
   mainset.zreal.vec = _mm256_sub_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec),
-                                    _mm256_mul_ps(mainset.zimag.vec,
-                                                  mainset.zimag.vec)); // zimag = (ztemp * zimag);
+      _mm256_mul_ps(mainset.zimag.vec,
+          mainset.zimag.vec)); // zimag = (ztemp * zimag);
   mainset.zimag.vec = _mm256_mul_ps(mainset.ztemp.vec, mainset.zimag.vec); // zimag += zimag;
   mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.zimag.vec); // adding c
   mainset.zreal.vec = _mm256_add_ps(mainset.zreal.vec, mainset.creal.vec); // zreal += creal;
@@ -107,21 +109,21 @@ void calcloop(mainobj& mainset) {
   }
 #endif
 
-void cleanup(mainobj& mainset, int* img, int& sentinel, __m256& four, __m256i& one,
-             __m256i maxitervec) {
+void cleanup(
+    mainobj& mainset, int* img, int& sentinel, __m256& four, __m256i& one, __m256i maxitervec) {
   // needs to be unrolled
   mainset.isfinished.vec =
       _mm256_or_si256(_mm256_castps_si256(_mm256_cmp_ps(mainset.zmag2.vec, four, _CMP_NLE_UQ)),
-                      (_mm256_cmpgt_epi32(mainset.iters.vec, maxitervec)));
+          (_mm256_cmpgt_epi32(mainset.iters.vec, maxitervec)));
   mainset.iters.vec =
       _mm256_add_epi32(_mm256_andnot_si256(mainset.isfinished.vec, one), mainset.iters.vec);
   mainset.zmag2.vec = _mm256_add_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec),
-                                    _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec));
+      _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec));
   mainset.isfinished.vec =
       _mm256_or_si256(_mm256_castps_si256(_mm256_cmp_ps(mainset.zmag2.vec, four, _CMP_NLE_UQ)),
-                      (_mm256_cmpgt_epi32(mainset.iters.vec, maxitervec)));
+          (_mm256_cmpgt_epi32(mainset.iters.vec, maxitervec)));
   if (_mm256_movemask_epi8(mainset.isfinished.vec) == -1) {
-    _mm256_storeu_si256((__m256i*)(&img[mainset.pxind]), mainset.iters.vec);
+    _mm256_stream_si256((__m256i*)(&img[mainset.pxind]), mainset.iters.vec);
     mainset.pxind += 8;
     mainset.iters.vec = _mm256_set1_epi32(LANE_EMPTY);
     if (mainset.pxind > mainset.numpixels) {
@@ -210,8 +212,16 @@ void pgm(int maxiter, int* img, int xres, int yres) {
 }
 
 int main() {
+  auto img = std::unique_ptr<int[]>{new (std::align_val_t(64)) int[1920 * 1080]};
+  init(4096, img.get(), 1920, 1080);
+  pgm(4096, img.get(), 1920, 1080);
+}
+
+#if 0
+int main() {
   int* img = (int*)malloc(1920 * 1080 * sizeof(int));
   init(4096, img, 1920, 1080);
   pgm(4096, img, 1920, 1080);
   free(img);
 }
+#endif

@@ -1,10 +1,10 @@
 calcgcc:
-	gcc -g -o calc -Ofast objcalc_simd.cpp -march=native 
+	g++ -g -o calc -Ofast objcalc_simd.cpp -march=native 
 debug:
-	gcc -o calc -g objcalc_simd.cpp -march=native -fsanitize=address -fsanitize=undefined -lasan -lubsan -pg
+	g++ -o calc -g objcalc_simd.cpp -march=native -fsanitize=address -fsanitize=undefined -lasan -lubsan -pg
 clean:
 	rm calc
 new:
-	gcc -o calc -g fullvector.cpp -Ofast -march=native
+	g++ -o calc -g fullvector.cpp -Ofast -march=native -std=c++20
 oldmath:
-	gcc -o calc -g oldmath.cpp -Ofast -march=native
+	g++ -o calc -g oldmath.cpp -Ofast -march=native
