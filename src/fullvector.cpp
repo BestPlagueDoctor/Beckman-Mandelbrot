@@ -76,22 +76,16 @@ struct mainobj {
   float ch;
 };
 
-void calcloop(mainobj &mainset) {
+void calcloop(mainobj& mainset) {
   // Calc loop, needs to be updated to new algo and unrolled
-  mainset.ztemp.vec =
-      mainset.zreal.vec; // zreal = ((zreal * zreal) - (zimag * zimag));
-  mainset.zreal.vec = _mm256_sub_ps(
-      _mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec),
-      _mm256_mul_ps(mainset.zimag.vec,
-                    mainset.zimag.vec)); // zimag = (ztemp * zimag);
-  mainset.zimag.vec =
-      _mm256_mul_ps(mainset.ztemp.vec, mainset.zimag.vec); // zimag += zimag;
-  mainset.zimag.vec =
-      _mm256_add_ps(mainset.zimag.vec, mainset.zimag.vec); // adding c
-  mainset.zreal.vec =
-      _mm256_add_ps(mainset.zreal.vec, mainset.creal.vec); // zreal += creal;
-  mainset.zimag.vec =
-      _mm256_add_ps(mainset.zimag.vec, mainset.cimag.vec); // zimag += cimag;
+  mainset.ztemp.vec = mainset.zreal.vec; // zreal = ((zreal * zreal) - (zimag * zimag));
+  mainset.zreal.vec = _mm256_sub_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec),
+                                    _mm256_mul_ps(mainset.zimag.vec,
+                                                  mainset.zimag.vec)); // zimag = (ztemp * zimag);
+  mainset.zimag.vec = _mm256_mul_ps(mainset.ztemp.vec, mainset.zimag.vec); // zimag += zimag;
+  mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.zimag.vec); // adding c
+  mainset.zreal.vec = _mm256_add_ps(mainset.zreal.vec, mainset.creal.vec); // zreal += creal;
+  mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.cimag.vec); // zimag += cimag;
 }
 
 #if 0
@@ -113,22 +107,21 @@ void calcloop(mainobj &mainset) {
   }
 #endif
 
-void cleanup(mainobj &mainset, int *img, int &sentinel, __m256 &four,
-             __m256i &one, __m256i maxitervec) {
+void cleanup(mainobj& mainset, int* img, int& sentinel, __m256& four, __m256i& one,
+             __m256i maxitervec) {
   // needs to be unrolled
-  mainset.isfinished.vec = _mm256_or_si256(
-      _mm256_castps_si256(_mm256_cmp_ps(mainset.zmag2.vec, four, _CMP_NLE_UQ)),
-      (_mm256_cmpgt_epi32(mainset.iters.vec, maxitervec)));
-  mainset.iters.vec = _mm256_add_epi32(
-      _mm256_andnot_si256(mainset.isfinished.vec, one), mainset.iters.vec);
-  mainset.zmag2.vec =
-      _mm256_add_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec),
-                    _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec));
-  mainset.isfinished.vec = _mm256_or_si256(
-      _mm256_castps_si256(_mm256_cmp_ps(mainset.zmag2.vec, four, _CMP_NLE_UQ)),
-      (_mm256_cmpgt_epi32(mainset.iters.vec, maxitervec)));
+  mainset.isfinished.vec =
+      _mm256_or_si256(_mm256_castps_si256(_mm256_cmp_ps(mainset.zmag2.vec, four, _CMP_NLE_UQ)),
+                      (_mm256_cmpgt_epi32(mainset.iters.vec, maxitervec)));
+  mainset.iters.vec =
+      _mm256_add_epi32(_mm256_andnot_si256(mainset.isfinished.vec, one), mainset.iters.vec);
+  mainset.zmag2.vec = _mm256_add_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec),
+                                    _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec));
+  mainset.isfinished.vec =
+      _mm256_or_si256(_mm256_castps_si256(_mm256_cmp_ps(mainset.zmag2.vec, four, _CMP_NLE_UQ)),
+                      (_mm256_cmpgt_epi32(mainset.iters.vec, maxitervec)));
   if (_mm256_movemask_epi8(mainset.isfinished.vec) == -1) {
-    _mm256_storeu_si256((__m256i *)(&img[mainset.pxind]), mainset.iters.vec);
+    _mm256_storeu_si256((__m256i*)(&img[mainset.pxind]), mainset.iters.vec);
     mainset.pxind += 8;
     mainset.iters.vec = _mm256_set1_epi32(LANE_EMPTY);
     if (mainset.pxind > mainset.numpixels) {
@@ -137,7 +130,7 @@ void cleanup(mainobj &mainset, int *img, int &sentinel, __m256 &four,
   }
 }
 
-void fillset(mainobj &mainset) {
+void fillset(mainobj& mainset) {
   // This routine stages all lanes, filling pixels, XY coords, and scales C
   // numbers before operation.
   for (int i = 0; i < LANE_SIZE; i++) {
@@ -155,15 +148,13 @@ void fillset(mainobj &mainset) {
       mainset.zmag2.lanes[i] = 0.0;
       mainset.px.lanes[i] = mainset.x;
       mainset.py.lanes[i] = mainset.y;
-      mainset.creal.lanes[i] =
-          (mainset.px.lanes[i] * mainset.recdiv + mainset.cx0);
-      mainset.cimag.lanes[i] =
-          (mainset.py.lanes[i] * mainset.imcdiv + mainset.cy0);
+      mainset.creal.lanes[i] = (mainset.px.lanes[i] * mainset.recdiv + mainset.cx0);
+      mainset.cimag.lanes[i] = (mainset.py.lanes[i] * mainset.imcdiv + mainset.cy0);
     }
   }
 }
 
-void init(int maxiter, int *img, int xres, int yres) {
+void init(int maxiter, int* img, int xres, int yres) {
   mainobj mainset;
   mainset.iters.vec = _mm256_set1_epi32(LANE_EMPTY);
   mainset.maxiter = maxiter;
@@ -200,9 +191,9 @@ void init(int maxiter, int *img, int xres, int yres) {
   }
 }
 
-void pgm(int maxiter, int *img, int xres, int yres) {
+void pgm(int maxiter, int* img, int xres, int yres) {
   const char filename[1024] = "smol.pgm";
-  FILE *ofp;
+  FILE* ofp;
   if ((ofp = fopen(filename, "w")) == NULL) {
     perror("FAILURE");
     return;
@@ -219,7 +210,7 @@ void pgm(int maxiter, int *img, int xres, int yres) {
 }
 
 int main() {
-  int *img = (int *)malloc(1920 * 1080 * sizeof(int));
+  int* img = (int*)malloc(1920 * 1080 * sizeof(int));
   init(4096, img, 1920, 1080);
   pgm(4096, img, 1920, 1080);
   free(img);
