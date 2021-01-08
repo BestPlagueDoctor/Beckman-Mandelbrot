@@ -6,6 +6,7 @@
 #include <memory>
 #include <new>
 #include <stdio.h>
+#include <thread>
 
 #define LANE_SIZE 8
 #define COUNTERINIT 0
@@ -78,9 +79,8 @@ struct mainobj {
   float ch;
 };
 
-void calcloop(mainobj& mainset) {}
-
-void fillset(mainobj& mainset) {}
+void calc(uint32_t start, uint32_t end, mainobj& mainset, int* img, __m256i one, __m256 four,
+    __m256i maxitervec);
 
 void init(int maxiter, int* img, int xres, int yres) {
   mainobj mainset;
@@ -92,8 +92,6 @@ void init(int maxiter, int* img, int xres, int yres) {
   mainset.xres = xres;
   mainset.yres = yres;
   mainset.numpixels = xres * yres;
-  mainset.px.vec = _mm256_set1_epi32(0);
-  mainset.py.vec = _mm256_set1_epi32(0);
 
   // initialize cartesian coordinate window
   mainset.cx0 = -2;
@@ -110,9 +108,20 @@ void init(int maxiter, int* img, int xres, int yres) {
   __m256i one = _mm256_set1_epi32(1);
   __m256 four = _mm256_set1_ps(4.0);
   __m256i maxitervec = _mm256_set1_epi32(mainset.maxiter);
-  int sentinel = 0;
-  // Cleanup//
 
+  // Threadcode goes here //
+  auto threads = std::vector<std::jthread>{};
+  auto const threadcount = std::thread::hardware_concurrency();
+  auto const div = mainset.numpixels / threadcount;
+
+  for (unsigned int i = 0; i < threadcount; i++) {
+    threads.emplace_back(calc, i * div, (i + 1) * div, mainset, &img, one, four, maxitervec);
+  }
+}
+
+// Cleanup//
+void calc(uint32_t start, uint32_t end, mainobj& mainset, int* img, __m256i one, __m256 four,
+    __m256i maxitervec) {
   while (true) {
     mainset.isfinished.vec =
         _mm256_or_si256(_mm256_castps_si256(_mm256_cmp_ps(mainset.zmag2.vec, four, _CMP_NLE_UQ)),

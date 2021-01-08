@@ -168,7 +168,6 @@ void init(int maxiter, int* img, int xres, int yres) {
   mainset.numpixels = xres * yres;
   mainset.px.vec = _mm256_set1_epi32(0);
   mainset.py.vec = _mm256_set1_epi32(0);
-
   // initialize cartesian coordinate window
   mainset.cx0 = -2;
   mainset.cy0 = -1.2;
