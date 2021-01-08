@@ -31,37 +31,9 @@ union intset {
 };
 
 struct mainobj {
-  // iters is the number of iterations the vector has undergone
-  intset iters;
 
-  // lanespeed is a flag to mark bailed lanes
-  intset isfinished;
-
-  // creal-ztemp are the operands of the set
-  set creal;
-  set cimag;
-  set zreal;
-  set zimag;
-  set ztemp;
-  set zmag2;
-  // sets for the purpose of manual unrolling
-  set savereal;
-  set saveimag;
-
-  intset px; // pixel associated with this lane
-  intset py; // pixel associated with this lane
-
-  // maxiter is the bailout term, once past maxiter we no longer care to process
-  // more precision
+  // Maxiter is a representation of precision used in calculation
   uint32_t maxiter;
-
-  // x and y represent current progress through the img,
-  // the next pixel to be processed in the "work queue"...
-  uint32_t x;
-  uint32_t y;
-
-  // pxind needs to be a global addr
-  uint32_t pxind;
 
   // imcdiv/recdiv are the ratio of range/resolution, giving positional location
   uint32_t xres;
@@ -84,11 +56,7 @@ void calc(uint32_t start, uint32_t end, mainobj& mainset, int* img, __m256i one,
 
 void init(int maxiter, int* img, int xres, int yres) {
   mainobj mainset;
-  mainset.iters.vec = _mm256_set1_epi32(LANE_EMPTY);
   mainset.maxiter = maxiter;
-  mainset.x = 0;
-  mainset.y = 0;
-  mainset.pxind = 0;
   mainset.xres = xres;
   mainset.yres = yres;
   mainset.numpixels = xres * yres;
@@ -122,22 +90,34 @@ void init(int maxiter, int* img, int xres, int yres) {
 // Cleanup//
 void calc(uint32_t start, uint32_t end, mainobj& mainset, int* img, __m256i one, __m256 four,
     __m256i maxitervec) {
+  // Definitions per thread //
+  intset iters, isfinished, px, py;
+  set creal, cimag, zreal, zimag, ztemp, zmag2, zrsq, zisq;
+  set savereal, saveimag, savezrsq, savezisq;
+  uint32_t x, y, pxind;
+  // End per thread definitions //
+  //
+  // Init per thread values //
+  iters.vec = _mm256_set1_epi32(LANE_EMPTY);
+  pxind = 0; // Think this is... start?
+  x = 0;     // ^^^^
+  y = 0;     // ^^^^, end?
+
   while (true) {
-    mainset.isfinished.vec =
-        _mm256_or_si256(_mm256_castps_si256(_mm256_cmp_ps(mainset.zmag2.vec, four, _CMP_NLE_UQ)),
-            (_mm256_cmpgt_epi32(mainset.iters.vec, maxitervec)));
-    mainset.iters.vec =
-        _mm256_add_epi32(_mm256_andnot_si256(mainset.isfinished.vec, one), mainset.iters.vec);
-    mainset.zmag2.vec = _mm256_add_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec),
-        _mm256_mul_ps(mainset.zimag.vec, mainset.zimag.vec));
-    mainset.isfinished.vec =
-        _mm256_or_si256(_mm256_castps_si256(_mm256_cmp_ps(mainset.zmag2.vec, four, _CMP_NLE_UQ)),
-            (_mm256_cmpgt_epi32(mainset.iters.vec, maxitervec)));
-    if (_mm256_movemask_epi8(mainset.isfinished.vec) == -1) {
-      _mm256_stream_si256((__m256i*)(&img[mainset.pxind]), mainset.iters.vec);
-      mainset.pxind += 8;
-      mainset.iters.vec = _mm256_set1_epi32(LANE_EMPTY);
-      if (mainset.pxind > mainset.numpixels) {
+    isfinished.vec =
+        _mm256_or_si256(_mm256_castps_si256(_mm256_cmp_ps(zmag2.vec, four, _CMP_NLE_UQ)),
+            (_mm256_cmpgt_epi32(iters.vec, maxitervec)));
+    iters.vec = _mm256_add_epi32(_mm256_andnot_si256(isfinished.vec, one), iters.vec);
+    zmag2.vec =
+        _mm256_add_ps(_mm256_mul_ps(zreal.vec, zreal.vec), _mm256_mul_ps(zimag.vec, zimag.vec));
+    isfinished.vec =
+        _mm256_or_si256(_mm256_castps_si256(_mm256_cmp_ps(zmag2.vec, four, _CMP_NLE_UQ)),
+            (_mm256_cmpgt_epi32(iters.vec, maxitervec)));
+    if (_mm256_movemask_epi8(isfinished.vec) == -1) {
+      _mm256_stream_si256((__m256i*)(&img[pxind]), iters.vec);
+      pxind += 8;
+      iters.vec = _mm256_set1_epi32(LANE_EMPTY);
+      if (pxind > mainset.numpixels) {
         break;
       }
     }
@@ -147,36 +127,36 @@ void calc(uint32_t start, uint32_t end, mainobj& mainset, int* img, __m256i one,
     // This routine stages all lanes, filling pixels, XY coords, and scales C
     // numbers before operation.
     for (int i = 0; i < LANE_SIZE; i++) {
-      if (mainset.iters.lanes[i] == LANE_EMPTY) {
-        mainset.x++;
-        if (mainset.x == mainset.xres) {
-          mainset.x = 0;
-          mainset.y++;
+      if (iters.lanes[i] == LANE_EMPTY) {
+        x++;
+        if (x == mainset.xres) {
+          x = 0;
+          y++;
         }
-        mainset.isfinished.vec = _mm256_set1_epi32(0);
-        mainset.iters.lanes[i] = 0;
-        mainset.zreal.lanes[i] = 0.0;
-        mainset.zimag.lanes[i] = 0.0;
-        mainset.ztemp.lanes[i] = 0.0;
-        mainset.zmag2.lanes[i] = 0.0;
-        mainset.px.lanes[i] = mainset.x;
-        mainset.py.lanes[i] = mainset.y;
-        mainset.creal.lanes[i] = (mainset.px.lanes[i] * mainset.recdiv + mainset.cx0);
-        mainset.cimag.lanes[i] = (mainset.py.lanes[i] * mainset.imcdiv + mainset.cy0);
+        isfinished.vec = _mm256_set1_epi32(0);
+        iters.lanes[i] = 0;
+        zreal.lanes[i] = 0.0;
+        zimag.lanes[i] = 0.0;
+        ztemp.lanes[i] = 0.0;
+        zmag2.lanes[i] = 0.0;
+        px.lanes[i] = x;
+        py.lanes[i] = y;
+        creal.lanes[i] = (px.lanes[i] * mainset.recdiv + mainset.cx0);
+        cimag.lanes[i] = (py.lanes[i] * mainset.imcdiv + mainset.cy0);
       }
     }
     // End of Fillset //
     //
     // Calcloop //
     // Calc loop, needs to be updated to new algo and unrolled
-    mainset.ztemp.vec = mainset.zreal.vec; // zreal = ((zreal * zreal) - (zimag * zimag));
-    mainset.zreal.vec = _mm256_sub_ps(_mm256_mul_ps(mainset.zreal.vec, mainset.zreal.vec),
-        _mm256_mul_ps(mainset.zimag.vec,
-            mainset.zimag.vec)); // zimag = (ztemp * zimag);
-    mainset.zimag.vec = _mm256_mul_ps(mainset.ztemp.vec, mainset.zimag.vec); // zimag += zimag;
-    mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.zimag.vec); // adding c
-    mainset.zreal.vec = _mm256_add_ps(mainset.zreal.vec, mainset.creal.vec); // zreal += creal;
-    mainset.zimag.vec = _mm256_add_ps(mainset.zimag.vec, mainset.cimag.vec); // zimag += cimag;
+    ztemp.vec = zreal.vec; // zreal = ((zreal * zreal) - (zimag * zimag));
+    zreal.vec = _mm256_sub_ps(
+        _mm256_mul_ps(zreal.vec, zreal.vec), _mm256_mul_ps(zimag.vec,
+                                                 zimag.vec)); // zimag = (ztemp * zimag);
+    zimag.vec = _mm256_mul_ps(ztemp.vec, zimag.vec);          // zimag += zimag;
+    zimag.vec = _mm256_add_ps(zimag.vec, zimag.vec);          // adding c
+    zreal.vec = _mm256_add_ps(zreal.vec, creal.vec);          // zreal += creal;
+    zimag.vec = _mm256_add_ps(zimag.vec, cimag.vec);          // zimag += cimag;
     // End of Calcloop //
   }
 }
