@@ -51,7 +51,7 @@ struct mainobj {
   float ch;
 };
 
-void calc(uint32_t start, uint32_t end, mainobj& mainset, int* img, __m256i one, __m256 four,
+void calc(uint32_t start, uint32_t end, mainobj mainset, int* img, __m256i one, __m256 four,
     __m256i maxitervec);
 
 void init(int maxiter, int* img, int xres, int yres) {
@@ -88,20 +88,20 @@ void init(int maxiter, int* img, int xres, int yres) {
 }
 
 // Cleanup//
-void calc(uint32_t start, uint32_t end, mainobj& mainset, int* img, __m256i one, __m256 four,
+void calc(uint32_t start, uint32_t end, mainobj mainset, int* img, __m256i one, __m256 four,
     __m256i maxitervec) {
   // Definitions per thread //
   intset iters, isfinished, px, py;
-  set creal, cimag, zreal, zimag, ztemp, zmag2, zrsq, zisq;
-  set savereal, saveimag, savezrsq, savezisq;
+  set creal, cimag, zreal, zimag, ztemp, zmag2;
   uint32_t x, y, pxind;
+  // set zrsq, zisq, savereal, saveimag, savezrsq, savezisq;
   // End per thread definitions //
   //
   // Init per thread values //
   iters.vec = _mm256_set1_epi32(LANE_EMPTY);
-  pxind = 0; // Think this is... start?
-  x = 0;     // ^^^^
-  y = 0;     // ^^^^, end?
+  pxind = start;            // Think this is... start?
+  x = start;                // ^^^^
+  y = start % mainset.xres; // ^^^^, end?
 
   while (true) {
     isfinished.vec =
