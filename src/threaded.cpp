@@ -83,7 +83,7 @@ void init(int maxiter, int* img, int xres, int yres) {
   auto const div = mainset.numpixels / threadcount;
 
   for (unsigned int i = 0; i < threadcount; i++) {
-    threads.emplace_back(calc, i * div, (i + 1) * div, mainset, &img, one, four, maxitervec);
+    threads.emplace_back(calc, i * div, (i + 1) * div, mainset, img, one, four, maxitervec);
   }
 }
 
@@ -100,8 +100,8 @@ void calc(uint32_t start, uint32_t end, mainobj mainset, int* img, __m256i one, 
   // Init per thread values //
   iters.vec = _mm256_set1_epi32(LANE_EMPTY);
   pxind = start;            // Think this is... start?
-  x = start;                // ^^^^
-  y = start % mainset.xres; // ^^^^, end?
+  x = start % mainset.xres; // ^^^^
+  y = start / mainset.xres; // ^^^^, end?
 
   while (true) {
     isfinished.vec =
@@ -117,7 +117,7 @@ void calc(uint32_t start, uint32_t end, mainobj mainset, int* img, __m256i one, 
       _mm256_stream_si256((__m256i*)(&img[pxind]), iters.vec);
       pxind += 8;
       iters.vec = _mm256_set1_epi32(LANE_EMPTY);
-      if (pxind > mainset.numpixels) {
+      if (pxind > end) {
         break;
       }
     }
@@ -193,14 +193,6 @@ int main() {
   pgm(4096, img, 1920, 1080);
   free(img);
 }
-#endif
-
-#if 0
-  while (sentinel < 8) {
-    cleanup(mainset, img, sentinel, four, one, maxitervec);
-    fillset(mainset);
-    calcloop(mainset);
-  }
 #endif
 
 #if 0
