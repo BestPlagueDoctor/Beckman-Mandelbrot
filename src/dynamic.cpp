@@ -95,19 +95,19 @@ void calc(mainobj mainset, int* img, __m256i one, __m256 four, __m256i maxiterve
   intset iters, isfinished, px, py;
   set creal, cimag, zreal, zimag, ztemp, zmag2;
   uint32_t x, y, pxind;
-  auto const tilesize = 8;
+  auto const tilesize = (16);
   uint32_t start;
   // set zrsq, zisq, savereal, saveimag, savezrsq, savezisq;
   // End per thread definitions //
   //
   // Init per thread values //
-  while ((start = work.fetch_add(tilesize, std::memory_order_relaxed)) <
-         mainset.numpixels - tilesize) {
+  while ((start = work.fetch_add(tilesize, std::memory_order_relaxed)) < mainset.numpixels) {
     uint32_t end = start + tilesize;
     iters.vec = _mm256_set1_epi32(LANE_EMPTY);
     pxind = start;
     x = start % mainset.xres;
     y = start / mainset.xres;
+    printf("start: %d   end: %d   x: %d   y: %d   pxind: %d\n", start, end, x, y, pxind);
 
     while (true) {
       isfinished.vec =
