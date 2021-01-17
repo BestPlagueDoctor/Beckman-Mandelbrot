@@ -98,13 +98,14 @@ void calc(mainobj mainset, int* img, __m256i one, __m256 four, __m256i maxiterve
   uint32_t x, y, pxind;
   uint32_t start, end;
 
-  auto const tilesize = 8;
+  // Tilesize must be a multiple of 8, or fear the wrath of the segfault
+  auto const tilesize = 64;
   // set zrsq, zisq, savereal, saveimag, savezrsq, savezisq;
   // End per thread definitions //
   //
   // Init per thread values //
-  while ((start = work.fetch_add(tilesize * 8, std::memory_order_relaxed)) < mainset.numpixels) {
-    end = start + (tilesize * 8);
+  while ((start = work.fetch_add(tilesize, std::memory_order_relaxed)) < mainset.numpixels) {
+    end = start + (tilesize);
     iters.vec = _mm256_set1_epi32(0);
     isfinished.vec = _mm256_set1_epi32(0);
     zreal.vec = _mm256_set1_ps(0.0F);

@@ -153,7 +153,6 @@ void calc(uint32_t start, uint32_t end, mainobj mainset, int* img, __m256i one, 
   zimag.vec = _mm256_add_ps(zimag.vec, cimag.vec);          // zimag += cimag;
   // End of Calcloop //
 }
-}
 
 void pgm(int maxiter, int* img, int xres, int yres) {
   const char filename[1024] = "smol.pgm";
