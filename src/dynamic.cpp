@@ -94,67 +94,35 @@ void calc(mainobj mainset, int* img, __m256i one, __m256 four, __m256i maxiterve
   // Definitions per thread //
   intset iters, isfinished, px, py;
   set creal, cimag, zreal, zimag, ztemp, zmag2;
+
   uint32_t x, y, pxind;
-  auto const tilesize = (16);
-  uint32_t start;
+  uint32_t start, end;
+
+  auto const tilesize = 8;
   // set zrsq, zisq, savereal, saveimag, savezrsq, savezisq;
   // End per thread definitions //
   //
   // Init per thread values //
-  while ((start = work.fetch_add(tilesize, std::memory_order_relaxed)) < mainset.numpixels) {
-    uint32_t end = start + tilesize;
-    iters.vec = _mm256_set1_epi32(LANE_EMPTY);
+  while ((start = work.fetch_add(tilesize * 8, std::memory_order_relaxed)) < mainset.numpixels) {
+    end = start + (tilesize * 8);
+    iters.vec = _mm256_set1_epi32(0);
+    isfinished.vec = _mm256_set1_epi32(0);
+    zreal.vec = _mm256_set1_ps(0.0F);
+    zimag.vec = _mm256_set1_ps(0.0F);
+    creal.vec = _mm256_set1_ps(0.0F);
+    cimag.vec = _mm256_set1_ps(0.0F);
     pxind = start;
-    x = start % mainset.xres;
-    y = start / mainset.xres;
-    printf("start: %d   end: %d   x: %d   y: %d   pxind: %d\n", start, end, x, y, pxind);
 
-    while (true) {
-      isfinished.vec =
-          _mm256_or_si256(_mm256_castps_si256(_mm256_cmp_ps(zmag2.vec, four, _CMP_NLE_UQ)),
-              (_mm256_cmpgt_epi32(iters.vec, maxitervec)));
-      iters.vec = _mm256_add_epi32(_mm256_andnot_si256(isfinished.vec, one), iters.vec);
-      zmag2.vec =
-          _mm256_add_ps(_mm256_mul_ps(zreal.vec, zreal.vec), _mm256_mul_ps(zimag.vec, zimag.vec));
-      isfinished.vec =
-          _mm256_or_si256(_mm256_castps_si256(_mm256_cmp_ps(zmag2.vec, four, _CMP_NLE_UQ)),
-              (_mm256_cmpgt_epi32(iters.vec, maxitervec)));
-      if (_mm256_movemask_epi8(isfinished.vec) == -1) {
-        _mm256_stream_si256((__m256i*)(&img[pxind]), iters.vec);
-        pxind += 8;
-        iters.vec = _mm256_set1_epi32(LANE_EMPTY);
-        if (pxind > end) {
-          break;
-        }
-      }
-      // End of cleanup //
-      //
-      // Fillset //
-      // This routine stages all lanes, filling pixels, XY coords, and scales C
-      // numbers before operation.
+    while (pxind < end) {
+      x = pxind % mainset.xres;
+      y = pxind / mainset.xres;
+
       for (int i = 0; i < LANE_SIZE; i++) {
-        if (iters.lanes[i] == LANE_EMPTY) {
-          x++;
-          if (x == mainset.xres) {
-            x = 0;
-            y++;
-          }
-          isfinished.vec = _mm256_set1_epi32(0);
-          iters.lanes[i] = 0;
-          zreal.lanes[i] = 0.0;
-          zimag.lanes[i] = 0.0;
-          ztemp.lanes[i] = 0.0;
-          zmag2.lanes[i] = 0.0;
-          px.lanes[i] = x;
-          py.lanes[i] = y;
-          creal.lanes[i] = (px.lanes[i] * mainset.recdiv + mainset.cx0);
-          cimag.lanes[i] = (py.lanes[i] * mainset.imcdiv + mainset.cy0);
-        }
+        creal.lanes[i] = (x + i) * mainset.recdiv + mainset.cx0;
+        cimag.lanes[i] = y * mainset.imcdiv + mainset.cy0;
       }
-      // End of Fillset //
+
       //
-      // Calcloop //
-      // Calc loop, needs to be updated to new algo and unrolled
       ztemp.vec = zreal.vec; // zreal = ((zreal * zreal) - (zimag * zimag));
       zreal.vec = _mm256_sub_ps(
           _mm256_mul_ps(zreal.vec, zreal.vec), _mm256_mul_ps(zimag.vec,
@@ -163,8 +131,32 @@ void calc(mainobj mainset, int* img, __m256i one, __m256 four, __m256i maxiterve
       zimag.vec = _mm256_add_ps(zimag.vec, zimag.vec);          // adding c
       zreal.vec = _mm256_add_ps(zreal.vec, creal.vec);          // zreal += creal;
       zimag.vec = _mm256_add_ps(zimag.vec, cimag.vec);          // zimag += cimag;
-      // End of Calcloop //
+      //
+      zmag2.vec =
+          _mm256_add_ps(_mm256_mul_ps(zreal.vec, zreal.vec), _mm256_mul_ps(zimag.vec, zimag.vec));
+      isfinished.vec =
+          _mm256_or_si256(_mm256_castps_si256(_mm256_cmp_ps(zmag2.vec, four, _CMP_NLE_UQ)),
+              (_mm256_cmpgt_epi32(iters.vec, maxitervec)));
+      iters.vec = _mm256_add_epi32(_mm256_andnot_si256(isfinished.vec, one), iters.vec);
+      if (_mm256_movemask_epi8(isfinished.vec) == -1) {
+        _mm256_stream_si256((__m256i*)(&img[pxind]), iters.vec);
+        pxind += 8;
+        isfinished.vec = _mm256_set1_epi32(0);
+        iters.vec = _mm256_set1_epi32(0);
+        zreal.vec = _mm256_set1_ps(0.0F);
+        zimag.vec = _mm256_set1_ps(0.0F);
+      }
     }
+    // End of cleanup //
+    //
+    // Fillset //
+    // This routine stages all lanes, filling pixels, XY coords, and scales C
+    // numbers before operation.
+    // End of Fillset //
+    //
+    // Calcloop //
+    // Calc loop, needs to be updated to new algo and unrolled
+    // End of Calcloop //
   }
 }
 

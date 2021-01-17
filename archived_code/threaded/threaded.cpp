@@ -127,38 +127,32 @@ void calc(uint32_t start, uint32_t end, mainobj mainset, int* img, __m256i one, 
     // This routine stages all lanes, filling pixels, XY coords, and scales C
     // numbers before operation.
     for (int i = 0; i < LANE_SIZE; i++) {
-      if (iters.lanes[i] == LANE_EMPTY) {
-        x++;
-        if (x == mainset.xres) {
-          x = 0;
-          y++;
-        }
-        isfinished.vec = _mm256_set1_epi32(0);
-        iters.lanes[i] = 0;
-        zreal.lanes[i] = 0.0;
-        zimag.lanes[i] = 0.0;
-        ztemp.lanes[i] = 0.0;
-        zmag2.lanes[i] = 0.0;
-        px.lanes[i] = x;
-        py.lanes[i] = y;
-        creal.lanes[i] = (px.lanes[i] * mainset.recdiv + mainset.cx0);
-        cimag.lanes[i] = (py.lanes[i] * mainset.imcdiv + mainset.cy0);
-      }
+      isfinished.vec = _mm256_set1_epi32(0);
+      iters.lanes[i] = 0;
+      zreal.lanes[i] = 0.0;
+      zimag.lanes[i] = 0.0;
+      ztemp.lanes[i] = 0.0;
+      zmag2.lanes[i] = 0.0;
+      px.lanes[i] = x;
+      py.lanes[i] = y;
+      creal.lanes[i] = (px.lanes[i] * mainset.recdiv + mainset.cx0);
+      cimag.lanes[i] = (py.lanes[i] * mainset.imcdiv + mainset.cy0);
     }
-    // End of Fillset //
-    //
-    // Calcloop //
-    // Calc loop, needs to be updated to new algo and unrolled
-    ztemp.vec = zreal.vec; // zreal = ((zreal * zreal) - (zimag * zimag));
-    zreal.vec = _mm256_sub_ps(
-        _mm256_mul_ps(zreal.vec, zreal.vec), _mm256_mul_ps(zimag.vec,
-                                                 zimag.vec)); // zimag = (ztemp * zimag);
-    zimag.vec = _mm256_mul_ps(ztemp.vec, zimag.vec);          // zimag += zimag;
-    zimag.vec = _mm256_add_ps(zimag.vec, zimag.vec);          // adding c
-    zreal.vec = _mm256_add_ps(zreal.vec, creal.vec);          // zreal += creal;
-    zimag.vec = _mm256_add_ps(zimag.vec, cimag.vec);          // zimag += cimag;
-    // End of Calcloop //
   }
+  // End of Fillset //
+  //
+  // Calcloop //
+  // Calc loop, needs to be updated to new algo and unrolled
+  ztemp.vec = zreal.vec; // zreal = ((zreal * zreal) - (zimag * zimag));
+  zreal.vec = _mm256_sub_ps(
+      _mm256_mul_ps(zreal.vec, zreal.vec), _mm256_mul_ps(zimag.vec,
+                                               zimag.vec)); // zimag = (ztemp * zimag);
+  zimag.vec = _mm256_mul_ps(ztemp.vec, zimag.vec);          // zimag += zimag;
+  zimag.vec = _mm256_add_ps(zimag.vec, zimag.vec);          // adding c
+  zreal.vec = _mm256_add_ps(zreal.vec, creal.vec);          // zreal += creal;
+  zimag.vec = _mm256_add_ps(zimag.vec, cimag.vec);          // zimag += cimag;
+  // End of Calcloop //
+}
 }
 
 void pgm(int maxiter, int* img, int xres, int yres) {
