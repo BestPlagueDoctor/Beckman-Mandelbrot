@@ -1,5 +1,6 @@
 // Hard scrap, new plan is to fully vectorize
 #include "proto.h"
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <immintrin.h>
@@ -52,7 +53,7 @@ struct mainobj {
 };
 
 void calc(mainobj mainset, int* img, __m256i one, __m256 four, __m256i maxitervec,
-    std::atomic<int>& work);
+    std::atomic<int>& work, int threadnumber);
 
 void init(int maxiter, int* img, int xres, int yres) {
   mainobj mainset;
@@ -80,30 +81,25 @@ void init(int maxiter, int* img, int xres, int yres) {
   // Threadcode goes here //
   auto threads = std::vector<std::jthread>{};
   auto const threadcount = std::thread::hardware_concurrency();
-  auto const div = mainset.numpixels / threadcount;
-  std::atomic<int> work(0);
-
-  for (unsigned int i = 0; i < threadcount; i++) {
-    threads.emplace_back(calc, mainset, img, one, four, maxitervec, std::ref(work));
+  // auto const div = mainset.numpixels / threadcount;
+  auto work = std::atomic<int>{};
+  for (unsigned int i = 0; i < threadcount; ++i) {
+    threads.emplace_back(calc, mainset, img, one, four, maxitervec, std::ref(work), i);
   }
 }
 
 // Cleanup//
 void calc(mainobj mainset, int* img, __m256i one, __m256 four, __m256i maxitervec,
-    std::atomic<int>& work) {
+    std::atomic<int>& work, int threadnumber) {
   // Definitions per thread //
   intset iters, isfinished, px, py;
   set creal, cimag, zreal, zimag, ztemp, zmag2;
-
   uint32_t x, y, pxind;
   uint32_t start, end;
-
   // Tilesize must be a multiple of 8, or fear the wrath of the segfault
-  auto const tilesize = 64;
-  // set zrsq, zisq, savereal, saveimag, savezrsq, savezisq;
+  auto const tilesize = 256;
   // End per thread definitions //
-  //
-  // Init per thread values //
+
   while ((start = work.fetch_add(tilesize, std::memory_order_relaxed)) < mainset.numpixels) {
     end = start + (tilesize);
     iters.vec = _mm256_set1_epi32(0);
@@ -148,16 +144,6 @@ void calc(mainobj mainset, int* img, __m256i one, __m256 four, __m256i maxiterve
         zimag.vec = _mm256_set1_ps(0.0F);
       }
     }
-    // End of cleanup //
-    //
-    // Fillset //
-    // This routine stages all lanes, filling pixels, XY coords, and scales C
-    // numbers before operation.
-    // End of Fillset //
-    //
-    // Calcloop //
-    // Calc loop, needs to be updated to new algo and unrolled
-    // End of Calcloop //
   }
 }
 
