@@ -7,6 +7,8 @@
 #include <memory>
 #include <new>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <thread>
 
 #define LANE_SIZE 8
@@ -53,9 +55,9 @@ struct mainobj {
 };
 
 void calc(mainobj mainset, int* img, __m256i one, __m256 four, __m256i maxitervec,
-    std::atomic<int>& work, int threadnumber);
+    std::atomic<int>& work, int threadnumber, int tilesize);
 
-void init(int maxiter, int* img, int xres, int yres) {
+void init(int maxiter, int* img, int xres, int yres, int tilesize, int cores) {
   mainobj mainset;
   mainset.maxiter = maxiter;
   mainset.xres = xres;
@@ -80,28 +82,33 @@ void init(int maxiter, int* img, int xres, int yres) {
 
   // Threadcode goes here //
   auto threads = std::vector<std::jthread>{};
+  // auto const threadcount = cores;
   auto const threadcount = std::thread::hardware_concurrency();
   // auto const div = mainset.numpixels / threadcount;
   auto work = std::atomic<int>{};
   for (unsigned int i = 0; i < threadcount; ++i) {
-    threads.emplace_back(calc, mainset, img, one, four, maxitervec, std::ref(work), i);
+    threads.emplace_back(calc, mainset, img, one, four, maxitervec, std::ref(work), i, tilesize);
   }
 }
 
 // Cleanup//
 void calc(mainobj mainset, int* img, __m256i one, __m256 four, __m256i maxitervec,
-    std::atomic<int>& work, int threadnumber) {
+    std::atomic<int>& work, int threadnumber, int tilesize) {
   // Definitions per thread //
   intset iters, isfinished, px, py;
   set creal, cimag, zreal, zimag, ztemp, zmag2;
   uint32_t x, y, pxind;
   uint32_t start, end;
+  const float incrlist[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+  const __m256 incrvec = _mm256_load_ps(incrlist);
+  const __m256 recdivvec = _mm256_set1_ps(mainset.recdiv);
+  const __m256 cx0vec = _mm256_set1_ps(mainset.cx0);
   // Tilesize must be a multiple of 8, or fear the wrath of the segfault
-  auto const tilesize = 256;
+  // auto const tilesize = 256;
   // End per thread definitions //
 
   while ((start = work.fetch_add(tilesize, std::memory_order_relaxed)) < mainset.numpixels) {
-    end = start + (tilesize);
+    end = start + tilesize;
     iters.vec = _mm256_set1_epi32(0);
     isfinished.vec = _mm256_set1_epi32(0);
     zreal.vec = _mm256_set1_ps(0.0F);
@@ -114,11 +121,10 @@ void calc(mainobj mainset, int* img, __m256i one, __m256 four, __m256i maxiterve
       x = pxind % mainset.xres;
       y = pxind / mainset.xres;
 
-      for (int i = 0; i < LANE_SIZE; i++) {
-        creal.lanes[i] = (x + i) * mainset.recdiv + mainset.cx0;
-        cimag.lanes[i] = y * mainset.imcdiv + mainset.cy0;
-      }
-
+      // New code to set c
+      creal.vec = _mm256_add_ps(
+          _mm256_mul_ps(_mm256_add_ps(_mm256_set1_ps(float(x)), incrvec), recdivvec), cx0vec);
+      cimag.vec = _mm256_set1_ps(float(y) * mainset.imcdiv + mainset.cy0);
       //
       ztemp.vec = zreal.vec; // zreal = ((zreal * zreal) - (zimag * zimag));
       zreal.vec = _mm256_sub_ps(
@@ -165,9 +171,25 @@ void pgm(int maxiter, int* img, int xres, int yres) {
   }
 }
 
-int main() {
+int main(int argc, char** argv) {
+  int tilesize = 8;
+  int cores;
+  for (int arg = 1; arg < argc; arg++) {
+    if (!strcmp(argv[arg], "-h") || !strcmp(argv[arg], "--help")) {
+      printf("Usage: \n");
+      printf("-tilesize N");
+    }
+    if (!strcmp(argv[arg], "-t")) {
+      arg++;
+      tilesize = atoi(argv[arg]);
+    }
+    if (!strcmp(argv[arg], "-c")) {
+      arg++;
+      cores = atoi(argv[arg]);
+    }
+  }
   auto img = std::unique_ptr<int[]>{new (std::align_val_t(64)) int[1920 * 1080]};
-  init(4096, img.get(), 1920, 1080);
+  init(4096, img.get(), 1920, 1080, tilesize, cores);
   pgm(4096, img.get(), 1920, 1080);
 }
 
