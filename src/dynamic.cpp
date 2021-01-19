@@ -96,7 +96,8 @@ void calc(mainobj mainset, int* img, __m256i one, __m256 four, __m256i maxiterve
     std::atomic<int>& work, int threadnumber, int tilesize) {
   // Definitions per thread //
   intset iters, isfinished, px, py;
-  set creal, cimag, zreal, zimag, ztemp, zmag2;
+  set creal, cimag, zreal, zimag, zmag2;
+  set zisq, zrsq;
   uint32_t x, y, pxind;
   uint32_t start, end;
   const float incrlist[8] = {0, 1, 2, 3, 4, 5, 6, 7};
@@ -115,6 +116,8 @@ void calc(mainobj mainset, int* img, __m256i one, __m256 four, __m256i maxiterve
     isfinished.vec = _mm256_set1_epi32(0);
     zreal.vec = _mm256_set1_ps(0.0F);
     zimag.vec = _mm256_set1_ps(0.0F);
+    // zisq.vec = _mm256_set1_ps(0.0F);
+    // zrsq.vec = _mm256_set1_ps(0.0F);
     creal.vec = _mm256_set1_ps(0.0F);
     cimag.vec = _mm256_set1_ps(0.0F);
     pxind = start;
@@ -124,22 +127,17 @@ void calc(mainobj mainset, int* img, __m256i one, __m256 four, __m256i maxiterve
       x = pxind % mainset.xres;
       y = pxind / mainset.xres;
 
-      // New code to set c
       creal.vec = _mm256_add_ps(
           _mm256_mul_ps(_mm256_add_ps(_mm256_set1_ps(float(x)), incrvec), recdivvec), cx0vec);
       cimag.vec = _mm256_set1_ps(float(y) * mainset.imcdiv + mainset.cy0);
-      //
-      ztemp.vec = zreal.vec; // zreal = ((zreal * zreal) - (zimag * zimag));
-      zreal.vec = _mm256_sub_ps(
-          _mm256_mul_ps(zreal.vec, zreal.vec), _mm256_mul_ps(zimag.vec,
-                                                   zimag.vec)); // zimag = (ztemp * zimag);
-      zimag.vec = _mm256_mul_ps(ztemp.vec, zimag.vec);          // zimag += zimag;
-      zimag.vec = _mm256_add_ps(zimag.vec, zimag.vec);          // adding c
-      zreal.vec = _mm256_add_ps(zreal.vec, creal.vec);          // zreal += creal;
-      zimag.vec = _mm256_add_ps(zimag.vec, cimag.vec);          // zimag += cimag;
-      //
-      zmag2.vec =
-          _mm256_add_ps(_mm256_mul_ps(zreal.vec, zreal.vec), _mm256_mul_ps(zimag.vec, zimag.vec));
+
+      zimag.vec =
+          _mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(zreal.vec, zreal.vec), zimag.vec), cimag.vec);
+      zreal.vec = _mm256_add_ps(_mm256_sub_ps(zrsq.vec, zisq.vec), creal.vec);
+      zisq.vec = _mm256_mul_ps(zimag.vec, zimag.vec);
+      zrsq.vec = _mm256_mul_ps(zreal.vec, zreal.vec);
+
+      zmag2.vec = _mm256_add_ps(zrsq.vec, zisq.vec);
       isfinished.vec =
           _mm256_or_si256(_mm256_castps_si256(_mm256_cmp_ps(zmag2.vec, four, _CMP_NLE_UQ)),
               (_mm256_cmpgt_epi32(iters.vec, maxitervec)));
@@ -151,6 +149,8 @@ void calc(mainobj mainset, int* img, __m256i one, __m256 four, __m256i maxiterve
         iters.vec = _mm256_set1_epi32(0);
         zreal.vec = _mm256_set1_ps(0.0F);
         zimag.vec = _mm256_set1_ps(0.0F);
+        zisq.vec = _mm256_set1_ps(0.0F);
+        zrsq.vec = _mm256_set1_ps(0.0F);
       }
     }
   }
@@ -192,7 +192,11 @@ int main(int argc, char** argv) {
     }
   }
   auto img = std::unique_ptr<int[]>{new (std::align_val_t(64)) int[1920 * 1080]};
+  auto const start = std::chrono::high_resolution_clock::now();
   init(4096, img.get(), 1920, 1080, tilesize, cores);
+  auto const end = std::chrono::high_resolution_clock::now();
+  printf("Calculation time: %lums\n",
+      std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
   pgm(4096, img.get(), 1920, 1080);
 }
 
