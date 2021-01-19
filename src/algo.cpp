@@ -97,7 +97,7 @@ void calc(mainobj mainset, int* img, __m256i one, __m256 four, __m256i maxiterve
   // Definitions per thread //
   intset iters, isfinished, px, py;
   set creal, cimag, zreal, zimag, ztemp, zmag2;
-  set zrsq, zisq, savereal, saveimag, saversq, saveisq;
+  set zrsq, zisq, savereal, saveimag, saversq, saveisq, savezmag2;
   uint32_t x, y, pxind;
   uint32_t start, end;
   const float incrlist[8] = {0, 1, 2, 3, 4, 5, 6, 7};
@@ -146,6 +146,8 @@ void calc(mainobj mainset, int* img, __m256i one, __m256 four, __m256i maxiterve
       savereal.vec = zreal.vec;
       saversq.vec = zrsq.vec;
       saveisq.vec = zisq.vec;
+      zmag2.vec = _mm256_add_ps(zrsq.vec, zisq.vec);
+      savezmag2.vec = zmag2.vec;
       for (int i; i < LANE_SIZE - 1; i++) {
         zimag.vec =
             _mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(zreal.vec, zreal.vec), zimag.vec), cimag.vec);
@@ -169,11 +171,14 @@ void calc(mainobj mainset, int* img, __m256i one, __m256 four, __m256i maxiterve
         zreal.vec = savereal.vec;
         zisq.vec = saveisq.vec;
         zrsq.vec = saversq.vec;
-        zmag2.vec = _mm256_add_ps(zrsq.vec, zisq.vec);
+        zmag2.vec = savezmag2.vec;
+        // zmag2.vec = _mm256_add_ps(zrsq.vec, zisq.vec);
+        // printf("%f %f %f %f %f %f %f %f \n", zmag2.lanes[0], zmag2.lanes[1], zmag2.lanes[2],
+        //    zmag2.lanes[3], zmag2.lanes[4], zmag2.lanes[5], zmag2.lanes[6], zmag2.lanes[7]);
         isfinished.vec =
             _mm256_or_si256(_mm256_castps_si256(_mm256_cmp_ps(zmag2.vec, four, _CMP_NLE_UQ)),
                 (_mm256_cmpeq_epi32(iters.vec, maxitervec)));
-        iters.vec = _mm256_add_epi32(_mm256_andnot_si256(unrollcmp, one), iters.vec);
+        iters.vec = _mm256_add_epi32(_mm256_andnot_si256(isfinished.vec, one), iters.vec);
         // unrollcmp = _mm256_cmpgt_epi32(iters.vec, seven);
         // iters.vec = _mm256_sub_epi32(_mm256_andnot_si256(unrollcmp, eight), iters.vec);
         // iters.vec = _mm256_add_epi32(_mm256_andnot_si256(unrollcmp, one), iters.vec);
@@ -181,18 +186,20 @@ void calc(mainobj mainset, int* img, __m256i one, __m256 four, __m256i maxiterve
         //    _mm256_or_si256(_mm256_castps_si256(_mm256_cmp_ps(zmag2.vec, four, _CMP_NLE_UQ)),
         //        (_mm256_cmpgt_epi32(iters.vec, maxitervec)));
         // printf("%d\n", _mm256_movemask_epi8(isfinished.vec));
-        while (_mm256_movemask_epi8(isfinished.vec) != -1) {
-          // printf("ballin");
-          zimag.vec = _mm256_add_ps(
-              _mm256_mul_ps(_mm256_add_ps(zreal.vec, zreal.vec), zimag.vec), cimag.vec);
-          zreal.vec = _mm256_add_ps(_mm256_sub_ps(zrsq.vec, zisq.vec), creal.vec);
-          zisq.vec = _mm256_mul_ps(zimag.vec, zimag.vec);
-          zrsq.vec = _mm256_mul_ps(zreal.vec, zreal.vec);
-          zmag2.vec = _mm256_add_ps(zrsq.vec, zisq.vec);
-          isfinished.vec =
-              _mm256_or_si256(_mm256_castps_si256(_mm256_cmp_ps(zmag2.vec, four, _CMP_NLE_UQ)),
-                  (_mm256_cmpeq_epi32(iters.vec, maxitervec)));
-          iters.vec = _mm256_add_epi32(_mm256_andnot_si256(isfinished.vec, one), iters.vec);
+        if (_mm256_movemask_epi8(isfinished.vec) != -1) {
+          while (_mm256_movemask_epi8(isfinished.vec) != -1) {
+            // printf("ballin");
+            zimag.vec = _mm256_add_ps(
+                _mm256_mul_ps(_mm256_add_ps(zreal.vec, zreal.vec), zimag.vec), cimag.vec);
+            zreal.vec = _mm256_add_ps(_mm256_sub_ps(zrsq.vec, zisq.vec), creal.vec);
+            zisq.vec = _mm256_mul_ps(zimag.vec, zimag.vec);
+            zrsq.vec = _mm256_mul_ps(zreal.vec, zreal.vec);
+            zmag2.vec = _mm256_add_ps(zrsq.vec, zisq.vec);
+            isfinished.vec =
+                _mm256_or_si256(_mm256_castps_si256(_mm256_cmp_ps(zmag2.vec, four, _CMP_NLE_UQ)),
+                    (_mm256_cmpeq_epi32(iters.vec, maxitervec)));
+            iters.vec = _mm256_add_epi32(_mm256_andnot_si256(isfinished.vec, one), iters.vec);
+          }
         }
         _mm256_stream_si256((__m256i*)(&img[pxind]), iters.vec);
         pxind += 8;
