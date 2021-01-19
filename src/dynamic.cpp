@@ -103,6 +103,8 @@ void calc(mainobj mainset, int* img, __m256i one, __m256 four, __m256i maxiterve
   const __m256 incrvec = _mm256_load_ps(incrlist);
   const __m256 recdivvec = _mm256_set1_ps(mainset.recdiv);
   const __m256 cx0vec = _mm256_set1_ps(mainset.cx0);
+  tilesize = 256;
+  // printf("%d\n", tilesize);
   // Tilesize must be a multiple of 8, or fear the wrath of the segfault
   // auto const tilesize = 256;
   // End per thread definitions //
@@ -116,6 +118,7 @@ void calc(mainobj mainset, int* img, __m256i one, __m256 four, __m256i maxiterve
     creal.vec = _mm256_set1_ps(0.0F);
     cimag.vec = _mm256_set1_ps(0.0F);
     pxind = start;
+    // printf("start:%d  end:%d  tilesize:%d \n", start, end, tilesize);
 
     while (pxind < end) {
       x = pxind % mainset.xres;
