@@ -1,6 +1,4 @@
 // This is mostly a test
-// take fasdf asdfas lmao
-#define GL_GLEXT_PROTOTYPES
 #include <GL/glew.h>
 #include <GL/glut.h>
 #include <chrono>
@@ -12,28 +10,32 @@
 #include <immintrin.h>
 #include <iostream>
 #include <memory>
-#include <new>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <thread>
 
+int times = 0;
 int xres = 1920, yres = 1080;
 GLuint pbo = 0; // pixelbuffer obj
 GLuint tex = 0; // texture obj
+GLuint fbo = 0; // framebuffer obj
+GLuint rbo = 0; // framebuffer obj
 struct cudaGraphicsResource* cuda_pbo_resource;
 struct uchar4;
 
-__global__ void calc(
-    uchar4* dout, int maxiter, float recdiv, float imcdiv, float cx0, float cy0, int xres);
-void pgm(int maxiter, int* img, int xres, int yres);
-void startkernel(uchar4* dout);
+__global__ void calc(uchar4* rgba, int maxiter, float recdiv, float imcdiv, float cx0, float cy0,
+    int xres, float* hist, int* iterimg, int& total);
+__global__ void color(
+    uchar4* rgba, float* hist, int xres, int* iterimg, float* huetest, int& total);
+void pgm(int maxiter, int* img, int xres, int& yres);
+void startkernel(uchar4* rgba);
+void fboinit();
+void pboinit();
 
 void render() {
-  uchar4* dout = 0;
+  uchar4* rgba = nullptr;
   cudaGraphicsMapResources(1, &cuda_pbo_resource, 0);
-  cudaGraphicsResourceGetMappedPointer((void**)&dout, NULL, cuda_pbo_resource);
-  startkernel(dout);
+  cudaGraphicsResourceGetMappedPointer((void**)&rgba, NULL, cuda_pbo_resource);
+  startkernel(rgba);
   cudaGraphicsUnmapResources(1, &cuda_pbo_resource, 0);
 }
 
@@ -65,6 +67,8 @@ void initglut(int* argc, char** argv) {
   glutInitWindowSize(xres, yres);
   glutCreateWindow("mandelbrot");
   glewInit();
+  pboinit();
+  //  fboinit();
 }
 
 void pboinit() {
@@ -77,6 +81,21 @@ void pboinit() {
   cudaGraphicsGLRegisterBuffer(&cuda_pbo_resource, pbo, cudaGraphicsMapFlagsWriteDiscard);
 }
 
+void fboinit() {
+  glGenFramebuffers(1, &fbo);
+  glGenTextures(1, &tex);
+  glGenRenderbuffers(1, &rbo);
+  glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+  glBindTexture(GL_TEXTURE_2D, tex);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, xres, yres, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
+  glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, xres, yres);
+  glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
+}
+
 void exitfunc() {
   if (pbo) {
     cudaGraphicsUnregisterResource(cuda_pbo_resource);
@@ -85,49 +104,90 @@ void exitfunc() {
   }
 }
 
-void startkernel(uchar4* dout) {
-  int xres = 1920, yres = 1080;
+void startkernel(uchar4* rgba) {
   int maxiter = 4096;
   float const cx0 = -2, cx1 = 1, cy0 = -1.2, cy1 = 1.2;
   float const cw = cx1 - cx0, ch = cy1 - cy0;
   float const recdiv = cw / float(xres), imcdiv = ch / float(yres);
+
+  float* hist;
+  int* img;
+  cudaMalloc(&img, xres * yres * sizeof(int));
+  cudaMalloc(&hist, xres * yres * sizeof(float));
+
+  float* huetest;
+  cudaMalloc(&huetest, xres * yres * sizeof(float));
+
+  int* total;
+  cudaMalloc(&total, sizeof(int));
+
   dim3 const dimBlock(32, 8);
   dim3 const dimGrid(std::ceil(float(xres) / dimBlock.x), std::ceil(float(yres) / dimBlock.y));
-  calc<<<dimGrid, dimBlock>>>(dout, maxiter, recdiv, imcdiv, cx0, cy0, xres);
+  calc<<<dimGrid, dimBlock>>>(rgba, maxiter, recdiv, imcdiv, cx0, cy0, xres, hist, img, *total);
+  color<<<dimGrid, dimBlock>>>(rgba, hist, xres, img, huetest, *total);
+  cudaFree(img);
+  cudaFree(hist);
+  cudaFree(total);
+  cudaFree(huetest);
 }
 
-__global__ void calc(
-    uchar4* dout, int maxiter, float recdiv, float imcdiv, float cx0, float cy0, int xres) {
+__global__ void calc(uchar4* rgba, int maxiter, float recdiv, float imcdiv, float cx0, float cy0,
+    int xres, float* hist, int* img, int& total) {
   int iters = 0;
-  float ztemp = 0, zreal = 0, zimag = 0;
+  float zmag2 = 0, zrsq = 0, zisq = 0, zreal = 0, zimag = 0;
   unsigned int x = blockIdx.x * blockDim.x + threadIdx.x;
   unsigned int y = blockIdx.y * blockDim.y + threadIdx.y;
   unsigned int ind = y * xres + x;
   float creal = x * recdiv + cx0;
   float cimag = y * imcdiv + cy0;
-  while (iters <= maxiter && ((zimag * zimag) + (zreal * zreal)) <= 4.0) {
-    // Update math algo, branch detection check
-    ztemp = zreal;
-    zreal = ((zreal * zreal) - (zimag * zimag));
-    zimag = (ztemp * zimag);
-    zimag += zimag;
-    zreal += creal;
-    zimag += cimag;
-    iters += 1;
+
+  while (iters <= maxiter && zmag2 <= 4) {
+    zimag = ((zreal + zreal) * zimag) + cimag;
+    zreal = (zrsq - zisq) + creal;
+    zisq = zimag * zimag;
+    zrsq = zreal * zreal;
+    zmag2 = zrsq + zisq;
+    iters++;
   }
-  dout[ind].x = iters;
-  dout[ind].y = iters;
-  dout[ind].z = iters;
-  dout[ind].w = iters;
+
+  hist[iters]++;
+  img[ind] = iters;
+  // rgba[ind].x = 0; // R
+  // rgba[ind].y = float(iters) * (255.0f / 4096.0f);
+  // rgba[ind].z = 0;   // B
+  // rgba[ind].w = 255; // A
+}
+
+__global__ void color(uchar4* rgba, float* hist, int xres, int* img, float* huetest, int& total) {
+  unsigned int x = blockIdx.x * blockDim.x + threadIdx.x;
+  unsigned int y = blockIdx.y * blockDim.y + threadIdx.y;
+  unsigned int ind = y * xres + x;
+  float hue;
+  total = 0;
+
+#if 1
+  for (int i = 0; i < 4096; i++) {
+    total += hist[i];
+  }
+#endif
+
+  // TODO figure out why total changes
+  float res = 96000;
+  for (int i = 0; i <= img[ind]; i++) {
+    hue += hist[i] / res;
+  }
+
+  rgba[ind].y = hue * 255;
+  rgba[ind].x = 0;   // R
+  rgba[ind].z = 0;   // B
+  rgba[ind].w = 255; // A
 }
 
 void mandelbrot(int argc, char** argv) {
-  int xres = 1920, yres = 1080;
   // GLUT STUFF
   initglut(&argc, argv);
   gluOrtho2D(0, xres, yres, 0);
   glutDisplayFunc(display);
-  pboinit();
   glutMainLoop();
   atexit(exitfunc);
 }
