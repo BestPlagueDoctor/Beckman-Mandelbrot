@@ -24,23 +24,25 @@ struct uchar4;
 
 __global__ void calc(uchar4* rgba, int maxiter, float recdiv, float imcdiv, float cx0, float cy0,
     int xres, float* hist, int* iterimg, int& total);
-__global__ void color(
-    uchar4* rgba, float* hist, int xres, int* iterimg, float* huetest, int& total);
+__global__ void color(uchar4* rgba, float* hist, int xres, int* iterimg, int& total);
 void pgm(int maxiter, int* img, int xres, int& yres);
 void startkernel(uchar4* rgba);
-void fboinit();
 void pboinit();
 
-void render() {
+void display() {
+  // create uchar and do math
   uchar4* rgba = nullptr;
   cudaGraphicsMapResources(1, &cuda_pbo_resource, 0);
   cudaGraphicsResourceGetMappedPointer((void**)&rgba, NULL, cuda_pbo_resource);
   startkernel(rgba);
   cudaGraphicsUnmapResources(1, &cuda_pbo_resource, 0);
-}
 
-void drawTex() {
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, xres, yres, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  glBindTexture(GL_TEXTURE_2D, tex);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
+  glBufferData(GL_PIXEL_UNPACK_BUFFER, xres * yres * 4 * sizeof(GLubyte), 0, GL_STREAM_DRAW);
+
+  glTexSubImage2D(
+      GL_TEXTURE_2D, 0, 0, 0, xres, yres, GL_RGBA, GL_UNSIGNED_BYTE, 0); // Null or pbo? hm
   glEnable(GL_TEXTURE_2D);
   glBegin(GL_QUADS);
   glTexCoord2f(0.0f, 0.0f);
@@ -53,11 +55,7 @@ void drawTex() {
   glVertex2f(xres, 0);
   glEnd();
   glDisable(GL_TEXTURE_2D);
-}
 
-void display() {
-  render();
-  drawTex();
   glutSwapBuffers();
 }
 
@@ -68,32 +66,20 @@ void initglut(int* argc, char** argv) {
   glutCreateWindow("mandelbrot");
   glewInit();
   pboinit();
-  //  fboinit();
 }
 
 void pboinit() {
   glGenBuffers(1, &pbo);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
   glBufferData(GL_PIXEL_UNPACK_BUFFER, xres * yres * 4 * sizeof(GLubyte), 0, GL_STREAM_DRAW);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+  cudaGraphicsGLRegisterBuffer(&cuda_pbo_resource, pbo, cudaGraphicsMapFlagsWriteDiscard);
+
   glGenTextures(1, &tex);
   glBindTexture(GL_TEXTURE_2D, tex);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  cudaGraphicsGLRegisterBuffer(&cuda_pbo_resource, pbo, cudaGraphicsMapFlagsWriteDiscard);
-}
-
-void fboinit() {
-  glGenFramebuffers(1, &fbo);
-  glGenTextures(1, &tex);
-  glGenRenderbuffers(1, &rbo);
-  glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-  glBindTexture(GL_TEXTURE_2D, tex);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, xres, yres, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
-  glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, xres, yres);
-  glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
+  glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void exitfunc() {
@@ -109,26 +95,22 @@ void startkernel(uchar4* rgba) {
   float const cx0 = -2, cx1 = 1, cy0 = -1.2, cy1 = 1.2;
   float const cw = cx1 - cx0, ch = cy1 - cy0;
   float const recdiv = cw / float(xres), imcdiv = ch / float(yres);
+  dim3 const dimBlock(32, 8);
+  dim3 const dimGrid(std::ceil(float(xres) / dimBlock.x), std::ceil(float(yres) / dimBlock.y));
 
   float* hist;
   int* img;
-  cudaMalloc(&img, xres * yres * sizeof(int));
-  cudaMalloc(&hist, xres * yres * sizeof(float));
-
-  float* huetest;
-  cudaMalloc(&huetest, xres * yres * sizeof(float));
-
   int* total;
+  cudaMalloc(&hist, xres * yres * sizeof(float));
+  cudaMalloc(&img, xres * yres * sizeof(int));
   cudaMalloc(&total, sizeof(int));
 
-  dim3 const dimBlock(32, 8);
-  dim3 const dimGrid(std::ceil(float(xres) / dimBlock.x), std::ceil(float(yres) / dimBlock.y));
   calc<<<dimGrid, dimBlock>>>(rgba, maxiter, recdiv, imcdiv, cx0, cy0, xres, hist, img, *total);
-  color<<<dimGrid, dimBlock>>>(rgba, hist, xres, img, huetest, *total);
-  cudaFree(img);
+  color<<<dimGrid, dimBlock>>>(rgba, hist, xres, img, *total);
+
   cudaFree(hist);
+  cudaFree(img);
   cudaFree(total);
-  cudaFree(huetest);
 }
 
 __global__ void calc(uchar4* rgba, int maxiter, float recdiv, float imcdiv, float cx0, float cy0,
@@ -152,24 +134,14 @@ __global__ void calc(uchar4* rgba, int maxiter, float recdiv, float imcdiv, floa
 
   hist[iters]++;
   img[ind] = iters;
-  // rgba[ind].x = 0; // R
-  // rgba[ind].y = float(iters) * (255.0f / 4096.0f);
-  // rgba[ind].z = 0;   // B
-  // rgba[ind].w = 255; // A
 }
 
-__global__ void color(uchar4* rgba, float* hist, int xres, int* img, float* huetest, int& total) {
+__global__ void color(uchar4* rgba, float* hist, int xres, int* img, int& total) {
   unsigned int x = blockIdx.x * blockDim.x + threadIdx.x;
   unsigned int y = blockIdx.y * blockDim.y + threadIdx.y;
   unsigned int ind = y * xres + x;
   float hue;
   total = 0;
-
-#if 1
-  for (int i = 0; i < 4096; i++) {
-    total += hist[i];
-  }
-#endif
 
   // TODO figure out why total changes
   float res = 96000;
